@@ -1,0 +1,13 @@
+# macOS
+.DS_Store
+
+# Editor / agent caches
+.claude/
+
+# Jupyter / Anaconda artifacts
+.ipynb_checkpoints/
+anaconda_projects/
+
+# Local recordings (kept in Drive, not in source control)
+*.mov
+*.gif
