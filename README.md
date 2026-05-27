@@ -1,6 +1,6 @@
-# Data Love AI — Interactive Demo
+# Data Love AI — Interactive Demoou
 
-A self-contained, clickable HTML prototype of the **Data Love AI platform** built for a generic, multi-program food security nonprofit (think Feeding America or Nourish Colorado — an organization running a Pantry Network alongside School Meals, Senior Nutrition, SNAP Outreach, and Mobile & Education programs). The demo shows stakeholders the end-to-end experience: logging in, asking Dorothy (the AI Data Officer) a question in natural language, watching the AI plan and assemble a report, reviewing data intents before SQL runs, and exporting a final stakeholder-ready document.
+A self-contained, clickable HTML prototype of the **Data Love AI platform** built for a generic, multi-program food security nonprofit (an organization running a Pantry Network alongside School Meals, Senior Nutrition, SNAP Outreach, and Mobile & Education programs). The demo shows stakeholders the end-to-end experience: logging in, asking Dorothy (the AI Data Officer) a question in natural language, watching the AI plan and assemble a report, reviewing data intents before SQL runs, and exporting a final stakeholder-ready document.
 
 ---
 
