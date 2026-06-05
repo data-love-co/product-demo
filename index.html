@@ -32,6 +32,7 @@
   --radius: 12px;
   --radius-sm: 8px;
   --radius-lg: 16px;
+  --accent: #F2736A;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -72,7 +73,7 @@ body { font-family: 'DM Sans', sans-serif; color: var(--text-primary); backgroun
 .sidebar nav { flex: 1; }
 .sidebar nav a { display: flex; align-items: center; gap: 12px; padding: 12px 24px; color: rgba(255,255,255,0.7); text-decoration: none; font-size: 14px; font-weight: 500; transition: all 0.2s; cursor: pointer; border-left: 3px solid transparent; }
 .sidebar nav a:hover { color: white; background: rgba(255,255,255,0.08); }
-.sidebar nav a.active { color: white; background: rgba(255,255,255,0.12); border-left-color: var(--teal); }
+.sidebar nav a.active { color: white; background: rgba(255,255,255,0.12); border-left-color: var(--accent); }
 .sidebar nav a svg { width: 20px; height: 20px; flex-shrink: 0; }
 .sidebar .sidebar-footer { padding: 16px 24px; border-top: 1px solid rgba(255,255,255,0.1); }
 .sidebar .sidebar-footer .user-info { display: flex; align-items: center; gap: 10px; }
@@ -300,6 +301,25 @@ body { font-family: 'DM Sans', sans-serif; color: var(--text-primary); backgroun
 /* Toast for user feedback */
 .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: var(--text-primary); color: white; padding: 12px 20px; border-radius: 24px; font-size: 13px; font-weight: 500; box-shadow: var(--shadow-lg); z-index: 300; opacity: 0; pointer-events: none; transition: opacity 0.3s, transform 0.3s; }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(-4px); }
+
+/* ── VERTICAL PICKER (login) ── */
+#login .login-card { max-height: 92vh; overflow-y: auto; }
+.vertical-picker { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
+.vp-card { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: all 0.15s; text-align: left; background: white; }
+.vp-card:hover { border-color: var(--accent); }
+.vp-card.selected { border-color: var(--accent); background: var(--bg-off); box-shadow: 0 0 0 1px var(--accent); }
+.vp-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.vp-label { font-size: 14px; font-weight: 600; }
+.vp-org { font-size: 11px; color: var(--text-secondary); }
+.demo-tag { margin-top: 16px; font-size: 10px; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text-muted); }
+
+/* ── SIDEBAR VERTICAL SWITCHER ── */
+.vertical-switch { padding: 14px 20px; border-top: 1px solid rgba(255,255,255,0.1); }
+.vertical-switch .vs-label { font-size: 10px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: rgba(255,255,255,0.35); margin-bottom: 6px; }
+.vertical-switch select { width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.08); color: white; font-family: inherit; font-size: 12px; font-weight: 500; cursor: pointer; outline: none; }
+.vertical-switch select option { color: var(--text-primary); }
+.vertical-switch .vs-org-name { display: block; font-size: 11px; color: rgba(255,255,255,0.7); font-weight: 500; margin-top: 8px; }
+.vertical-switch .vs-tag { display: block; font-size: 9px; letter-spacing: 0.6px; text-transform: uppercase; color: rgba(255,255,255,0.35); margin-top: 2px; }
 </style>
 </head>
 <body>
@@ -315,10 +335,13 @@ body { font-family: 'DM Sans', sans-serif; color: var(--text-primary); backgroun
     </div>
     <h1>Login</h1>
     <p class="tagline">Your Data, Your Impact, Simplified</p>
+    <label>Choose a demo vertical</label>
+    <div class="vertical-picker" id="verticalPicker"></div>
     <label>Enter your email address</label>
     <input type="email" placeholder="Email" id="emailInput" value="maya@harvestbridge.org">
-    <button class="btn-primary" onclick="navigateTo('dashboard')">OK</button>
+    <button class="btn-primary" onclick="enterApp()">OK</button>
     <p class="login-footer">DON'T HAVE AN ACCOUNT? SIGN UP HERE</p>
+    <p class="demo-tag">Illustrative demo — sample data</p>
   </div>
 </div>
 
@@ -943,12 +966,14 @@ body { font-family: 'DM Sans', sans-serif; color: var(--text-primary); backgroun
 // Demo state
 // ════════════════════════════════════════════════════
 const DEMO = {
-  scriptedPrompt: "Give me a breakdown of the Pantry Network's Neighbor Experience Survey results. I want to see response rates, how responses accumulated over time, and participation by district. Include both complete and partial responses.",
-  scriptedBotResponse: "Great — I'll structure a report covering survey participation and response patterns. Let me plan the sections:<br><br><strong>1. Survey Design</strong> — total responses, completion rates, question coverage<br><strong>2. Response Accumulation</strong> — daily/weekly trends over the survey period<br><strong>3. Geographic Participation</strong> — district-level breakdowns<br><strong>4. Completion Analysis</strong> — complete vs. partial response patterns<br><br>I'll now generate the data intents for each section. You'll have a chance to review before I proceed. ➡️ <em>Sending to HITL review…</em>",
   running: false,
   skip: false,
   timers: [],
 };
+
+// Active SDoH vertical — in-memory only (no persistence by design)
+const STATE = { vertical: 'hunger' };
+function V() { return VERTICALS[STATE.vertical]; }
 
 function sleep(ms) {
   return new Promise(resolve => {
@@ -1153,7 +1178,7 @@ async function runDorothyScript() {
   resetPipeline();
 
   // Type the user's prompt into the input box
-  await typeIntoInput(input, DEMO.scriptedPrompt, 18);
+  await typeIntoInput(input, V().dorothy.prompt, 18);
   await sleep(400);
 
   // Push as user chat msg, clear input
@@ -1168,7 +1193,7 @@ async function runDorothyScript() {
   typing.remove();
 
   // Stream bot response in parallel with pipeline animation
-  const stream = streamBotMessage(DEMO.scriptedBotResponse, 14);
+  const stream = streamBotMessage(V().dorothy.botResponse, 14);
   await sleep(300);
   await animatePipelineUpToHITL();
   await stream;
@@ -1217,7 +1242,7 @@ async function toggleMic() {
     mic.textContent = '🎙️';
     micState = 'idle';
     const input = document.getElementById('chatInput');
-    await typeIntoInput(input, DEMO.scriptedPrompt, 14);
+    await typeIntoInput(input, V().dorothy.prompt, 14);
   } else {
     mic.classList.remove('listening');
     mic.textContent = '🎙️';
@@ -1243,19 +1268,20 @@ function toggleDetail(id) {
   el.classList.toggle('show');
 }
 
-// Dashboard bar chart
+// Dashboard bar chart — data from active vertical; rebuilds on every call so
+// vertical switches re-render cleanly (no children.length early-exit)
 function initDashCharts() {
   const container = document.getElementById('visitBars');
-  if (container.children.length > 0) return;
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const values = [185,192,201,210,198,205,218,224,231,245,238,252];
+  if (!container) return;
+  container.innerHTML = '';
+  const { labels, values } = V().dashboard.bars;
   const max = Math.max(...values);
-  months.forEach((m, i) => {
+  labels.forEach((m, i) => {
     const g = document.createElement('div');
     g.className = 'bar-group';
     const b = document.createElement('div');
     b.className = 'bar';
-    b.style.background = i < 3 ? 'var(--purple-deep)' : (i < 6 ? 'var(--purple-mid)' : (i < 9 ? 'var(--purple-light)' : 'var(--teal)'));
+    b.style.background = i < 3 ? 'var(--purple-deep)' : (i < 6 ? 'var(--purple-mid)' : (i < 9 ? 'var(--purple-light)' : 'var(--accent)'));
     b.style.height = (values[i] / max * 140) + 'px';
     const l = document.createElement('div');
     l.className = 'bar-label';
@@ -1269,45 +1295,49 @@ function initDashCharts() {
 function initInsightsCharts() {
   // Weekly bars
   const wb = document.getElementById('weeklyBars');
-  if (wb.children.length > 0) return;
-  const wvals = [12400,13100,11800,14200,13600,15100,14800,16200,15400,14900,15800,16500];
-  const wmax = Math.max(...wvals);
-  wvals.forEach((v,i) => {
-    const b = document.createElement('div');
-    b.className = 'mini-bar';
-    b.style.height = (v/wmax*70)+'px';
-    b.style.background = i === wvals.length-1 ? 'var(--purple-deep)' : 'var(--purple-light)';
-    b.style.opacity = i === wvals.length-1 ? '1' : '0.5';
-    wb.appendChild(b);
-  });
-  // Household bars
+  if (wb) {
+    wb.innerHTML = '';
+    const wvals = V().insights.weekly.values;
+    const wmax = Math.max(...wvals);
+    wvals.forEach((v,i) => {
+      const b = document.createElement('div');
+      b.className = 'mini-bar';
+      b.style.height = (v/wmax*70)+'px';
+      b.style.background = i === wvals.length-1 ? 'var(--purple-deep)' : 'var(--purple-light)';
+      b.style.opacity = i === wvals.length-1 ? '1' : '0.5';
+      wb.appendChild(b);
+    });
+  }
+  // Distribution bars (household size, pipeline stage, wage bands, …)
   const hb = document.getElementById('hhBars');
-  if (hb.children.length > 0) return;
-  const hvals = [18, 24, 31, 15, 8, 4];
-  const hlabels = ['1','2','3','4','5','6+'];
-  const hmax = Math.max(...hvals);
-  hvals.forEach((v,i) => {
-    const b = document.createElement('div');
-    b.className = 'mini-bar';
-    b.style.height = (v/hmax*70)+'px';
-    b.style.background = 'var(--teal)';
-    b.style.opacity = 0.4 + (v/hmax)*0.6;
-    b.title = hlabels[i] + ' person(s): ' + v + '%';
-    hb.appendChild(b);
-  });
+  if (hb) {
+    hb.innerHTML = '';
+    const { labels: hlabels, values: hvals } = V().insights.dist;
+    const hmax = Math.max(...hvals);
+    hvals.forEach((v,i) => {
+      const b = document.createElement('div');
+      b.className = 'mini-bar';
+      b.style.height = (v/hmax*70)+'px';
+      b.style.background = 'var(--accent)';
+      b.style.opacity = 0.4 + (v/hmax)*0.6;
+      b.title = hlabels[i] + ': ' + v + '%';
+      hb.appendChild(b);
+    });
+  }
 }
 
 function initReportCharts() {
   const ac = document.getElementById('accumChart');
-  if (ac.children.length > 0) return;
-  // Simulated S-curve accumulation
-  const points = [2,5,9,14,21,30,40,50,60,68,75,81,86,90,93,95,97,98,99,100];
+  if (!ac) return;
+  ac.innerHTML = '';
+  // Simulated S-curve accumulation — data from active vertical
+  const points = V().report.curve;
   const max = 100;
   points.forEach((v,i) => {
     const b = document.createElement('div');
     b.className = 'report-bar';
     b.style.height = (v/max*170)+'px';
-    b.style.background = v < 50 ? 'var(--purple-light)' : (v < 90 ? 'var(--purple-deep)' : 'var(--teal)');
+    b.style.background = v < 50 ? 'var(--purple-light)' : (v < 90 ? 'var(--purple-deep)' : 'var(--accent)');
     const label = document.createElement('div');
     label.className = 'bar-val';
     label.textContent = v+'%';
@@ -1342,8 +1372,835 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// Init dashboard on load
-setTimeout(() => initDashCharts(), 100);
+// ════════════════════════════════════════════════════
+// SDoH VERTICALS — all scenario content lives here.
+// Every screen renders from VERTICALS[STATE.vertical].
+// All organizations, people, and numbers are fictional.
+// ════════════════════════════════════════════════════
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+const VERTICALS = {
+
+  // ───────────────────────── HUNGER (original demo content) ─────────────────────────
+  hunger: {
+    label: 'Hunger',
+    accent: '#F2736A',
+    org: { name: 'Harvest Bridge Network', location: 'Denver, CO', budget: '~$8.5M' },
+    personas: {
+      ed:   { name: 'Maya Chen',    first: 'Maya',  role: 'Executive Director', initials: 'MC' },
+      user: { name: 'David Okafor', first: 'David', role: 'Program Director',   initials: 'DO' },
+      tech: { name: 'Priya Nair',   first: 'Priya', role: 'Data Manager',       initials: 'PN' },
+    },
+    login: { email: 'maya@harvestbridge.org' },
+    sidebarRole: 'Admin • Program Pilot',
+    dashboard: {
+      subtitle: 'Unified analytics across your Pantry Network, School Meals, Senior Nutrition, SNAP Outreach, and Education programs.',
+      stats: [
+        { label: 'People Served (YTD)',      value: '1.2M', delta: '↑ 12.3% vs. prior quarter' },
+        { label: 'Reports Generated (YTD)',  value: '847',  delta: '↑ 34% vs. same period LY' },
+        { label: 'Active Program Sites',     value: '712',  delta: '↑ 8 new since last month' },
+      ],
+      barTitle: 'Monthly Service Volume — All Programs (2025)',
+      bars: { labels: MONTHS, values: [185,192,201,210,198,205,218,224,231,245,238,252] },
+      donutTitle: 'Service Mix by Program',
+      donut: {
+        center: '1.2M', centerLabel: 'served',
+        segments: [
+          { name: 'Pantry Network', pct: 33 }, { name: 'School Meals', pct: 24 },
+          { name: 'Senior Nutrition', pct: 19 }, { name: 'SNAP Outreach', pct: 14 },
+          { name: 'Mobile & Education', pct: 10 },
+        ],
+      },
+    },
+    dorothy: {
+      prompt: "Give me a breakdown of the Pantry Network's Neighbor Experience Survey results. I want to see response rates, how responses accumulated over time, and participation by district. Include both complete and partial responses.",
+      botResponse: "Great — I'll structure a report covering survey participation and response patterns. Let me plan the sections:<br><br><strong>1. Survey Design</strong> — total responses, completion rates, question coverage<br><strong>2. Response Accumulation</strong> — daily/weekly trends over the survey period<br><strong>3. Geographic Participation</strong> — district-level breakdowns<br><strong>4. Completion Analysis</strong> — complete vs. partial response patterns<br><br>I'll now generate the data intents for each section. You'll have a chance to review before I proceed. ➡️ <em>Sending to HITL review…</em>",
+    },
+    hitl: {
+      title: 'Review: Survey Design',
+      description: 'Quantify the overall structure and participation characteristics of the survey by measuring total completed responses, how responses accumulated over time, coverage and participation across survey questions, and the breadth of respondent locations represented.',
+      intents: [
+        { name: 'total_response_count',            details: [['Grain','overall'],['Filters','none — include complete and partial']] },
+        { name: 'cumulative_response_percentage',  details: [['Grain','per response date'],['Filters','response_completion_status: all']] },
+        { name: 'question_response_rate',          details: [['Grain','per survey question'],['Filters','include partial responses']] },
+        { name: 'distinct_question_count',         details: [['Grain','overall']] },
+        { name: 'distinct_location_count',         details: [['Grain','overall']] },
+      ],
+      knowledge: 'You can use both complete and partial responses in the survey data',
+    },
+    report: {
+      title: 'Neighbor Experience Survey — Participation Analysis',
+      meta: ['🗂️ Program: Pantry Network', '📅 Generated: April 11, 2026', '📊 Data source: warehouse.curated.survey_neighbor_experience', '🔒 Includes partial responses'],
+      curve: [2,5,9,14,21,30,40,50,60,68,75,81,86,90,93,95,97,98,99,100],
+      sections: [
+        `<h2>1. Survey Design & Participation Overview</h2>
+          <p>The Neighbor Experience Survey received <strong>4,217 total responses</strong> across 32 distinct questions. Of these, 2,891 (68.6%) were complete submissions and 1,326 (31.4%) were partial responses. Respondents represented <strong>147 unique locations</strong> across all five service districts.</p>
+          <div class="insight-box"><p>💡 Including partial responses increases the analyzable sample by 45.9%, providing substantially broader coverage of respondent perspectives.</p></div>
+          <table class="data-table">
+            <thead><tr><th>Metric</th><th>Value</th></tr></thead>
+            <tbody>
+              <tr><td>Total Responses</td><td><strong>4,217</strong></td></tr>
+              <tr><td>Complete Responses</td><td>2,891 (68.6%)</td></tr>
+              <tr><td>Partial Responses</td><td>1,326 (31.4%)</td></tr>
+              <tr><td>Distinct Questions</td><td>32</td></tr>
+              <tr><td>Distinct Locations</td><td>147</td></tr>
+              <tr><td>Survey Period</td><td>Sep 15 – Dec 20, 2025</td></tr>
+            </tbody>
+          </table>`,
+        `<h2>2. Response Accumulation Over Time</h2>
+          <p>Responses accumulated steadily, with a notable acceleration in mid-October following a targeted outreach push. The cumulative response rate reached 50% by October 18 and 90% by November 28.</p>
+          <div class="report-chart" id="accumChart"></div>`,
+        `<h2>3. Geographic Participation</h2>
+          <p>The North District accounted for the largest share of responses (31.2%), consistent with the district's higher concentration of food pantry locations on the reservation system. The West District showed the highest completion rate at 74.1%, while the South District had the lowest response volume but highest per-pantry participation.</p>
+          <table class="data-table">
+            <thead><tr><th>District</th><th>Responses</th><th>% of Total</th><th>Completion Rate</th></tr></thead>
+            <tbody>
+              <tr><td>North</td><td>1,316</td><td>31.2%</td><td>66.3%</td></tr>
+              <tr><td>East</td><td>1,055</td><td>25.0%</td><td>69.8%</td></tr>
+              <tr><td>Central</td><td>802</td><td>19.0%</td><td>71.2%</td></tr>
+              <tr><td>West</td><td>676</td><td>16.0%</td><td>74.1%</td></tr>
+              <tr><td>South</td><td>368</td><td>8.7%</td><td>63.9%</td></tr>
+            </tbody>
+          </table>`,
+        `<h2>4. Question-Level Response Rates</h2>
+          <p>Early survey questions (Q1–Q8) maintained response rates above 90%, indicating strong initial engagement. Drop-off was most pronounced between Q18 and Q24, where rates fell below 65% — suggesting these questions may benefit from repositioning or simplification in future survey iterations.</p>
+          <div class="insight-box"><p>💡 <strong>Data limitation:</strong> Question-level rates reflect the proportion of respondents who reached each question, not skip patterns. Some partial responders may have exited mid-survey rather than skipping specific questions.</p></div>`,
+      ],
+    },
+    datahub: {
+      sources: [
+        { icon: '⬡', iconBg: 'var(--purple-bg)', iconColor: 'var(--purple-deep)', name: 'Pantry Network Operations', detail: 'Private database · 6 tables · Last sync: Today 08:14 AM<br>Visit records, household demographics, pantry locations, reservation history' },
+        { icon: '🎒', iconBg: 'var(--teal-light)', iconColor: 'var(--teal-dark)', name: 'School Meals & Backpack', detail: 'Private database · 4 tables · Last sync: Today 06:00 AM<br>School-site distributions, weekend backpack enrollment, attendance rosters' },
+        { icon: '👵', iconBg: '#FDE8EC', iconColor: 'var(--coral)', name: 'Senior Nutrition System', detail: 'Private database · 3 tables · Last sync: Today 05:30 AM<br>Home-delivered meals, congregate dining sites, client intake records' },
+        { icon: '📋', iconBg: '#FEF3C7', iconColor: '#92400E', name: 'SNAP Outreach Tracker', detail: 'Private database · 3 tables · Last sync: Today 08:14 AM<br>Enrollment sessions, application outcomes, recertification follow-ups' },
+        { icon: '📝', iconBg: 'var(--teal-light)', iconColor: 'var(--teal-dark)', name: 'Survey Platform', detail: 'External survey tool · 4 surveys ingested · Last sync: Today 08:14 AM<br>Surveys: Neighbor Experience, Pantry Travel, School Family Pulse, Senior Wellness' },
+        { icon: '📊', iconBg: 'var(--purple-bg)', iconColor: 'var(--purple-deep)', name: 'Public Data (Census + SDOH)', detail: 'Pre-integrated public datasets · Last sync: Apr 01, 2026<br>Census ACS demographics + AHRQ Social Determinants of Health, tract-level' },
+      ],
+      schema: [
+        ['pantry_visits','Pantry Network','2,418,306','Apr 11, 2026','Individual pantry visit records with timestamps and locations'],
+        ['pantry_households','Pantry Network','1,204,818','Apr 11, 2026','Composite household demographics per visit'],
+        ['pantry_locations','Pantry Network','612','Apr 10, 2026','Pantry sites: hours, services, district mapping'],
+        ['school_meal_distributions','School Meals','89,432','Apr 11, 2026','Daily school-site distribution counts (breakfast, lunch, backpack)'],
+        ['school_meal_recipients','School Meals','14,208','Apr 11, 2026','Enrolled students with eligibility and dietary flags'],
+        ['senior_meals_delivered','Senior Nutrition','156,743','Apr 11, 2026','Home-delivered & congregate meal records'],
+        ['snap_enrollment_sessions','SNAP Outreach','8,917','Apr 11, 2026','Application support sessions with outcome status'],
+        ['unified_clients','Cross-program','198,604','Apr 11, 2026','De-duplicated client identity across all programs'],
+        ['survey_neighbor_experience','Pantry Network','4,217','Apr 10, 2026','Neighbor Experience Survey responses'],
+        ['survey_pantry_travel','Pantry Network','1,842','Apr 10, 2026','Pantry Travel Survey with Member Pass linkage'],
+      ],
+    },
+    insights: {
+      pills: ['All Programs','Pantry Network','School Meals','Senior Nutrition','SNAP Outreach','Mobile & Education'],
+      weekly: { title: 'Weekly Service Volume', desc: 'Service interactions across all programs', values: [12400,13100,11800,14200,13600,15100,14800,16200,15400,14900,15800,16500] },
+      trend:  { title: 'Unique Recipients (Monthly Trend)', desc: 'Distinct people served by at least one program' },
+      dist:   { title: 'Household Size — Pantry Network', desc: 'Composite demographics — where the food went',
+                labels: ['1 person(s)','2 person(s)','3 person(s)','4 person(s)','5 person(s)','6+ person(s)'], values: [18,24,31,15,8,4] },
+      tracker: { title: 'Survey Response Tracker', desc: 'Neighbor Experience Survey · Pantry Network', pct: 68.6, note: '2,891 complete / 4,217 total (incl. partial)' },
+    },
+    storycraft: {
+      title: 'Quarterly Program Report: Pantry Network — Q1 2026',
+      date: 'Prepared for: Regional Food Policy Office · April 2026',
+      body: `<p><strong>Executive Summary</strong></p>
+        <p>Across our five core programs, we served <strong>approximately 1.2 million people</strong> in Q1 2026 — a <span class="story-highlight">12.3% increase</span> over Q4 2025. This report focuses on the <strong>Pantry Network</strong>, which accounted for 33% of total service volume with <strong>approximately 618,000 visits</strong> across 612 active pantry sites. The North District continued to account for the largest share of pantry activity (31.2%), while the West District showed the strongest quarter-over-quarter growth at 18.4%.</p>
+        <br>
+        <p><strong>Key Findings</strong></p>
+        <p>Average household size among pantry visitors remained stable at <strong>3.2 members</strong>, consistent with prior quarters. The Neighbor Experience Survey, which concluded in December 2025 with 4,217 responses, revealed that <strong>76% of respondents</strong> used our pantry reservation system as their primary method for locating food assistance — up from 62% in the 2024 survey cycle. Cross-program analysis (forthcoming) will examine how Pantry Network households also engaged with School Meals, Senior Nutrition, and SNAP Outreach.</p>
+        <br>
+        <p><strong>Data Limitations</strong></p>
+        <p>This analysis reflects operational data from the Pantry Network only. Activity from our School Meals, Senior Nutrition, SNAP Outreach, and Mobile & Education programs is covered in separate program reports. Survey data includes both complete and partial responses; question-level response rates vary as described in the Participation Analysis report.</p>`,
+    },
+  },
+
+  // ───────────────────────── HOUSING ─────────────────────────
+  housing: {
+    label: 'Housing',
+    accent: '#27A2AA',
+    org: { name: 'Cornerstone Home Partners', location: 'Longmont, CO', budget: '~$9M' },
+    personas: {
+      ed:   { name: 'Ruth Delgado', first: 'Ruth',   role: 'Executive Director',        initials: 'RD' },
+      user: { name: 'Marcus Bell',  first: 'Marcus', role: 'Family Services Director',  initials: 'MB' },
+      tech: { name: 'Lena Park',    first: 'Lena',   role: 'Impact & Data Manager',     initials: 'LP' },
+    },
+    login: { email: 'ruth@cornerstonehome.org' },
+    sidebarRole: 'Admin • Program Pilot',
+    dashboard: {
+      subtitle: 'Unified analytics across your Homeownership, Home Repair, Mortgage Services, Volunteer, and Family Education programs.',
+      stats: [
+        { label: 'Homes Completed (YTD)',         value: '11',     delta: '↑ 3 vs. same period LY' },
+        { label: 'Families in Pipeline',          value: '187',    delta: '↑ 9.4% vs. prior quarter' },
+        { label: 'Median Application → Closing',  value: '284 d',  delta: '↓ 31 days vs. 2024' },
+        { label: 'Volunteer Hours (YTD)',         value: '12,840', delta: '↑ 14% vs. same period LY' },
+        { label: 'Mortgage Portfolio Current',    value: '96.8%',  delta: '↑ 0.6 pts vs. prior quarter' },
+        { label: 'Critical Repairs (YTD)',        value: '47',     delta: '↑ 12 vs. same period LY' },
+      ],
+      barTitle: 'Monthly Build & Repair Completions — All Programs (2025)',
+      bars: { labels: MONTHS, values: [14,12,16,19,22,25,27,26,23,21,17,15] },
+      donutTitle: 'Service Mix by Program',
+      donut: {
+        center: '531', centerLabel: 'families served',
+        segments: [
+          { name: 'Homeownership', pct: 38 }, { name: 'Home Repair', pct: 26 },
+          { name: 'Mortgage Services', pct: 16 }, { name: 'Family Education', pct: 12 },
+          { name: 'Volunteer & Outreach', pct: 8 },
+        ],
+      },
+    },
+    dorothy: {
+      prompt: "How many families completed the path to homeownership last year, and what was the median time from application to closing, broken out by county?",
+      botResponse: "Great — I'll structure a report covering homeownership completions and time-to-close performance. Let me plan the sections:<br><br><strong>1. Completion Overview</strong> — families closed in 2025, year-over-year change<br><strong>2. Time-to-Close</strong> — cumulative closings across the year<br><strong>3. County Breakdown</strong> — closings and median days by county<br><strong>4. Pipeline Context</strong> — where active families sit today<br><br>I'll now generate the data intents for each section. You'll have a chance to review before I proceed. ➡️ <em>Sending to HITL review…</em>",
+    },
+    hitl: {
+      title: 'Review: Homeownership Completions',
+      description: 'Quantify completed homeownership journeys and time-to-close performance by measuring total 2025 closings, the median number of days from application to closing, county-level breakdowns of both measures, and the stage distribution of the active pipeline.',
+      intents: [
+        { name: 'completed_homeownership_count',     details: [['Grain','overall — calendar year 2025'],['Filters','program: homeownership; status: closed']] },
+        { name: 'median_application_to_closing_days',details: [['Grain','overall'],['Filters','closings dated in 2025 only']] },
+        { name: 'closings_by_county',                details: [['Grain','per county'],['Filters','status: closed']] },
+        { name: 'median_days_by_county',             details: [['Grain','per county']] },
+        { name: 'pipeline_stage_distribution',       details: [['Grain','per stage'],['Filters','active applications only']] },
+      ],
+      knowledge: 'Use closing date (not move-in date) as the completion milestone for 2025',
+    },
+    report: {
+      title: 'Homeownership Completions — Time-to-Close Analysis',
+      meta: ['🗂️ Program: Homeownership', '📅 Generated: April 11, 2026', '📊 Data source: warehouse.curated.homeownership_applications', '👤 Requested by: Marcus Bell · Reviewed by: Lena Park'],
+      curve: [3,6,10,15,20,26,33,41,50,58,66,73,79,84,89,93,96,98,99,100],
+      sections: [
+        `<h2>1. Completion Overview</h2>
+          <p>In calendar year 2025, <strong>38 families completed the path to homeownership</strong>, up from 31 closings in 2024 (+22.6%). The median time from application to closing was <strong>284 days</strong>, an improvement of 31 days over the 2024 median of 315 days.</p>
+          <div class="insight-box"><p>💡 Streamlined document collection and a dedicated closing coordinator cut a full month from the median application-to-closing timeline.</p></div>
+          <table class="data-table">
+            <thead><tr><th>Metric</th><th>Value</th></tr></thead>
+            <tbody>
+              <tr><td>Completed Closings (2025)</td><td><strong>38</strong></td></tr>
+              <tr><td>Completed Closings (2024)</td><td>31</td></tr>
+              <tr><td>Median Application → Closing</td><td>284 days</td></tr>
+              <tr><td>2024 Median</td><td>315 days</td></tr>
+              <tr><td>Fastest Closing</td><td>176 days</td></tr>
+              <tr><td>Active Pipeline Families</td><td>187</td></tr>
+            </tbody>
+          </table>`,
+        `<h2>2. Cumulative Closings Over Time</h2>
+          <p>Closings accumulated steadily through the year, with a construction-season acceleration in late summer. The cumulative count reached 50% of the annual total by July 14 and 90% by November 8.</p>
+          <div class="report-chart" id="accumChart"></div>`,
+        `<h2>3. County Breakdown</h2>
+          <p>Boulder County accounted for the majority of completions (55.3%) and posted the fastest median time-to-close at 271 days, reflecting the concentration of build sites and lender partners there. Broomfield's small volume makes its median sensitive to individual cases.</p>
+          <table class="data-table">
+            <thead><tr><th>County</th><th>Closings</th><th>% of Total</th><th>Median Days</th></tr></thead>
+            <tbody>
+              <tr><td>Boulder</td><td>21</td><td>55.3%</td><td>271</td></tr>
+              <tr><td>Weld</td><td>9</td><td>23.7%</td><td>296</td></tr>
+              <tr><td>Larimer</td><td>5</td><td>13.2%</td><td>305</td></tr>
+              <tr><td>Broomfield</td><td>3</td><td>7.9%</td><td>312</td></tr>
+            </tbody>
+          </table>`,
+        `<h2>4. Pipeline Context</h2>
+          <p>187 families are active in the homeownership pipeline today: 52 in intake, 41 in financial review, 36 approved and awaiting build assignment, 32 under construction, and 26 in pre-closing. At current throughput, roughly 44–48 closings are projected for 2026.</p>
+          <div class="insight-box"><p>💡 <strong>Data limitation:</strong> Median time-to-close reflects completed applications only. Families still in process are excluded, so the cohort median may shift as longer-running applications close.</p></div>`,
+      ],
+    },
+    datahub: {
+      sources: [
+        { icon: '🏠', iconBg: 'var(--purple-bg)', iconColor: 'var(--purple-deep)', name: 'Homeownership Application System', detail: 'Private database · 6 tables · Last sync: Today 08:14 AM<br>Applications, stage history, closings, family demographics' },
+        { icon: '🔨', iconBg: 'var(--teal-light)', iconColor: 'var(--teal-dark)', name: 'Home Repair Work Orders', detail: 'Private database · 4 tables · Last sync: Today 06:00 AM<br>Repair requests, work orders, crew schedules, completion records' },
+        { icon: '🏦', iconBg: '#FDE8EC', iconColor: 'var(--coral)', name: 'Mortgage Servicing Portfolio', detail: 'Private database · 3 tables · Last sync: Today 05:30 AM<br>Loan terms, payment history, delinquency status' },
+        { icon: '🤝', iconBg: '#FEF3C7', iconColor: '#92400E', name: 'Volunteer Management', detail: 'Private database · 3 tables · Last sync: Today 08:14 AM<br>Volunteer profiles, shift sign-ups, build-site hours' },
+        { icon: '🎓', iconBg: 'var(--teal-light)', iconColor: 'var(--teal-dark)', name: 'Family Education & Counseling', detail: 'External LMS · 2 course feeds ingested · Last sync: Today 08:14 AM<br>Homebuyer education enrollment, financial counseling sessions' },
+        { icon: '📊', iconBg: 'var(--purple-bg)', iconColor: 'var(--purple-deep)', name: 'Public Data (Census + CHAS)', detail: 'Pre-integrated public datasets · Last sync: Apr 01, 2026<br>Census ACS demographics + HUD CHAS housing affordability, tract-level' },
+      ],
+      schema: [
+        ['homeownership_applications','Homeownership','4,812','Apr 11, 2026','Applications with status, county, and milestone dates'],
+        ['application_stage_history','Homeownership','38,204','Apr 11, 2026','Stage-by-stage timestamps per application'],
+        ['closings','Homeownership','312','Apr 10, 2026','Completed closings with closing date and loan details'],
+        ['repair_work_orders','Home Repair','1,847','Apr 11, 2026','Repair requests, scopes, and completion status'],
+        ['mortgage_portfolio','Mortgage Services','486','Apr 11, 2026','Active loans with terms and current status'],
+        ['mortgage_payments','Mortgage Services','41,238','Apr 11, 2026','Monthly payment records per loan'],
+        ['volunteer_shifts','Volunteers','29,610','Apr 11, 2026','Build-site and repair-crew volunteer hours'],
+        ['education_enrollments','Family Education','2,318','Apr 11, 2026','Homebuyer education and counseling enrollment'],
+        ['unified_families','Cross-program','6,940','Apr 11, 2026','De-duplicated family identity across all programs'],
+        ['survey_homeowner_experience','Homeownership','1,034','Apr 10, 2026','Homeowner Experience Survey responses'],
+      ],
+    },
+    insights: {
+      pills: ['All Programs','Homeownership','Home Repair','Mortgage Services','Family Education','Volunteers'],
+      weekly: { title: 'Weekly Volunteer & Crew Hours', desc: 'Build-site and repair crew activity', values: [620,580,710,840,910,1050,1120,1180,1090,980,820,760] },
+      trend:  { title: 'Families Served (Monthly Trend)', desc: 'Distinct families served by at least one program' },
+      dist:   { title: 'Pipeline by Stage — Homeownership', desc: 'Active families at each milestone',
+                labels: ['Intake','Financial Review','Approved','Under Construction','Pre-Closing'], values: [28,22,19,17,14] },
+      tracker: { title: 'Survey Response Tracker', desc: 'Homeowner Experience Survey · Homeownership', pct: 71.4, note: '738 complete / 1,034 total (incl. partial)' },
+    },
+    storycraft: {
+      title: 'Quarterly Program Report: Homeownership — Q1 2026',
+      date: 'Prepared for: Boulder County Housing Partnership · April 2026 · Prepared by: Lena Park',
+      body: `<p><strong>Executive Summary</strong></p>
+        <p>Cornerstone Home Partners served <strong>531 families</strong> across our five programs in Q1 2026 — a <span class="story-highlight">9.4% increase</span> over Q4 2025. This report focuses on the <strong>Homeownership program</strong>, which closed 11 homes in the quarter and maintains a pipeline of 187 active families across Boulder, Weld, Larimer, and Broomfield counties. Volunteer crews contributed 12,840 hours year-to-date, and our mortgage portfolio remains 96.8% current.</p>
+        <br>
+        <p><strong>Key Findings</strong></p>
+        <p>Median application-to-closing time fell to <strong>284 days</strong>, down 31 days from 2024, driven by streamlined document collection and a dedicated closing coordinator. The Homeowner Experience Survey, which closed in December 2025 with 1,034 responses, found that <strong>84% of new homeowners</strong> reported improved housing stability within six months of closing. Critical home repairs — 47 completed year-to-date — continue to grow as our fastest-expanding program.</p>
+        <br>
+        <p><strong>Data Limitations</strong></p>
+        <p>This analysis reflects operational data from the Homeownership program only. Home Repair, Mortgage Services, and Family Education activity is covered in separate program reports. Time-to-close medians reflect completed applications and exclude families still in process.</p>`,
+    },
+  },
+
+  // ───────────────────────── ECONOMIC STABILITY ─────────────────────────
+  economic: {
+    label: 'Economic Stability',
+    accent: '#FEC84D',
+    org: { name: 'Ascend Financial Futures', location: 'Aurora, CO', budget: '~$6M' },
+    personas: {
+      ed:   { name: 'Daniel Osei',  first: 'Daniel', role: 'CEO',                        initials: 'DO' },
+      user: { name: 'Sofia Reyes',  first: 'Sofia',  role: 'Workforce Program Director', initials: 'SR' },
+      tech: { name: 'Amir Haddad',  first: 'Amir',   role: 'Data & Outcomes Lead',       initials: 'AH' },
+    },
+    login: { email: 'daniel@ascendfutures.org' },
+    sidebarRole: 'Admin • Program Pilot',
+    dashboard: {
+      subtitle: 'Unified analytics across your Workforce Training, Financial Coaching, Benefits Access, Career Placement, and Small Business programs.',
+      stats: [
+        { label: 'Clients Placed in Jobs (YTD)', value: '214',      delta: '↑ 18% vs. same period LY' },
+        { label: 'Median Wage Gain (12-mo)',     value: '$4.85/hr', delta: '↑ $0.40 vs. 2024 cohort' },
+        { label: 'Avg Credit Score Change',      value: '+38 pts',  delta: '↑ 6 pts vs. last year' },
+        { label: 'Benefits Enrolled (YTD)',      value: '512',      delta: '65.8% of screenings converted' },
+        { label: 'Active Coaching Clients',      value: '894',      delta: '↑ 7.2% vs. prior quarter' },
+        { label: 'Job Retention (12-mo)',        value: '71.2%',    delta: '↑ 2.4 pts vs. 2023 cohort' },
+      ],
+      barTitle: 'Monthly Job Placements — All Tracks (2025)',
+      bars: { labels: MONTHS, values: [38,42,47,51,49,55,58,61,57,63,60,66] },
+      donutTitle: 'Service Mix by Program',
+      donut: {
+        center: '3.4K', centerLabel: 'clients served',
+        segments: [
+          { name: 'Workforce Training', pct: 34 }, { name: 'Financial Coaching', pct: 26 },
+          { name: 'Benefits Access', pct: 18 }, { name: 'Career Placement', pct: 14 },
+          { name: 'Small Business', pct: 8 },
+        ],
+      },
+    },
+    dorothy: {
+      prompt: "What's the median wage gain for clients 12 months after job placement, and how does it differ by program track?",
+      botResponse: "Great — I'll structure a report covering 12-month wage outcomes and how they vary by track. Let me plan the sections:<br><br><strong>1. Wage Gain Overview</strong> — median real wage gain, baseline vs. 12-month wages<br><strong>2. Follow-Up Coverage</strong> — how much of the cohort has wage data on record<br><strong>3. Track Comparison</strong> — wage gains and retention by program track<br><strong>4. Coverage & Interpretation</strong> — what missing follow-ups mean for the medians<br><br>I'll now generate the data intents for each section. You'll have a chance to review before I proceed. ➡️ <em>Sending to HITL review…</em>",
+    },
+    hitl: {
+      title: 'Review: Wage Outcomes',
+      description: 'Quantify 12-month earnings outcomes for placed clients by measuring median real wage gain overall and by program track, follow-up coverage for the placement cohort, job retention at 12 months, and the distribution of baseline wages.',
+      intents: [
+        { name: 'median_wage_gain_12mo',        details: [['Grain','overall'],['Filters','placements with a 12-month follow-up wage recorded']] },
+        { name: 'wage_gain_by_track',           details: [['Grain','per program track'],['Filters','CPI-adjusted to real dollars']] },
+        { name: 'follow_up_coverage_rate',      details: [['Grain','per placement cohort'],['Filters','include lost-to-follow-up in denominator']] },
+        { name: 'retention_rate_12mo',          details: [['Grain','per track']] },
+        { name: 'baseline_wage_distribution',   details: [['Grain','per wage band']] },
+      ],
+      knowledge: 'Compare wages in real dollars — apply CPI adjustment to baseline wages before computing gains',
+    },
+    report: {
+      title: '12-Month Wage Outcomes — Program Track Analysis',
+      meta: ['🗂️ Program: Career Placement', '📅 Generated: April 11, 2026', '📊 Data source: warehouse.curated.placement_wage_followups', '👤 Requested by: Sofia Reyes · Reviewed by: Amir Haddad'],
+      curve: [4,8,13,19,26,34,43,50,57,64,71,77,82,87,91,94,96,98,99,100],
+      sections: [
+        `<h2>1. Wage Gain Overview</h2>
+          <p>Among clients placed in 2024 with a 12-month wage follow-up on record, the median wage gain was <strong>$4.85/hour</strong> over baseline (CPI-adjusted). Follow-up wages were collected for <strong>438 of 597 placements</strong> (73.4% coverage). The median baseline wage was $16.40/hour; the median 12-month wage was $21.25/hour.</p>
+          <div class="insight-box"><p>💡 CPI adjustment matters: in nominal dollars the median gain is $5.60/hour, but $0.75 of that reflects inflation rather than real earning power.</p></div>
+          <table class="data-table">
+            <thead><tr><th>Metric</th><th>Value</th></tr></thead>
+            <tbody>
+              <tr><td>Median Wage Gain (12-mo, real)</td><td><strong>$4.85/hr</strong></td></tr>
+              <tr><td>Median Baseline Wage</td><td>$16.40/hr</td></tr>
+              <tr><td>Median Wage at 12 Months</td><td>$21.25/hr</td></tr>
+              <tr><td>Placements with Follow-Up</td><td>438 of 597 (73.4%)</td></tr>
+              <tr><td>12-Month Job Retention</td><td>71.2%</td></tr>
+            </tbody>
+          </table>`,
+        `<h2>2. Follow-Up Collection Over Time</h2>
+          <p>Wage follow-ups for the 2024 placement cohort accumulated as clients reached their 12-month milestones, reaching 50% of eventual coverage by week 26 of the collection window and 90% by week 44. Quarterly state wage-record matching recovered an additional 9% of otherwise-missing follow-ups.</p>
+          <div class="report-chart" id="accumChart"></div>`,
+        `<h2>3. Wage Gain by Program Track</h2>
+          <p>Healthcare Careers and Skilled Trades produced the largest real wage gains, reflecting credential premiums in those sectors. Retail & Hospitality placements showed the smallest gains but the fastest median time-to-placement.</p>
+          <table class="data-table">
+            <thead><tr><th>Track</th><th>Placements</th><th>Median Gain</th><th>12-mo Retention</th></tr></thead>
+            <tbody>
+              <tr><td>Healthcare Careers</td><td>96</td><td>$6.20/hr</td><td>78.1%</td></tr>
+              <tr><td>Skilled Trades</td><td>84</td><td>$5.75/hr</td><td>75.0%</td></tr>
+              <tr><td>IT Support</td><td>71</td><td>$5.10/hr</td><td>73.2%</td></tr>
+              <tr><td>Administrative</td><td>102</td><td>$3.40/hr</td><td>69.6%</td></tr>
+              <tr><td>Retail & Hospitality</td><td>85</td><td>$2.65/hr</td><td>61.2%</td></tr>
+            </tbody>
+          </table>`,
+        `<h2>4. Coverage & Interpretation</h2>
+          <p>Coverage varies by track — from 81% (Healthcare Careers) to 64% (Retail & Hospitality). Clients lost to follow-up skew toward shorter job tenures, so the reported medians likely overstate gains for the full cohort by a modest margin.</p>
+          <div class="insight-box"><p>💡 <strong>Data limitation:</strong> Wage gains are computed only for clients with both a baseline and a 12-month wage on record. State wage-record matching recovers some missing follow-ups but lags by one quarter.</p></div>`,
+      ],
+    },
+    datahub: {
+      sources: [
+        { icon: '💼', iconBg: 'var(--purple-bg)', iconColor: 'var(--purple-deep)', name: 'Client Case Management', detail: 'Private database · 6 tables · Last sync: Today 08:14 AM<br>Client records, placements, case notes, employment verifications' },
+        { icon: '🎓', iconBg: 'var(--teal-light)', iconColor: 'var(--teal-dark)', name: 'Workforce Training LMS', detail: 'External LMS · 5 track feeds ingested · Last sync: Today 06:00 AM<br>Enrollment, attendance, credential completion by track' },
+        { icon: '💰', iconBg: '#FDE8EC', iconColor: 'var(--coral)', name: 'Financial Coaching Platform', detail: 'Private database · 4 tables · Last sync: Today 05:30 AM<br>Coaching sessions, budgets, credit score snapshots' },
+        { icon: '📋', iconBg: '#FEF3C7', iconColor: '#92400E', name: 'Benefits Screening Tool', detail: 'Private database · 3 tables · Last sync: Today 08:14 AM<br>Screenings, eligibility results, enrollment outcomes' },
+        { icon: '🏛', iconBg: 'var(--purple-bg)', iconColor: 'var(--purple-deep)', name: 'State Wage Records', detail: 'Quarterly UI wage match · Last sync: Apr 01, 2026<br>Matched quarterly earnings for consented clients' },
+        { icon: '📊', iconBg: 'var(--teal-light)', iconColor: 'var(--teal-dark)', name: 'Public Data (Census + ALICE)', detail: 'Pre-integrated public datasets · Last sync: Apr 01, 2026<br>Census ACS demographics + ALICE household survival budgets, tract-level' },
+      ],
+      schema: [
+        ['clients','Cross-program','12,408','Apr 11, 2026','Client records with intake demographics and consent flags'],
+        ['placements','Career Placement','3,219','Apr 11, 2026','Job placements with employer, track, and start date'],
+        ['placement_wage_followups','Career Placement','2,361','Apr 11, 2026','Baseline and 12-month wage records per placement'],
+        ['coaching_sessions','Financial Coaching','18,754','Apr 11, 2026','One-on-one coaching session log'],
+        ['credit_score_snapshots','Financial Coaching','6,442','Apr 11, 2026','Quarterly credit score pulls for consented clients'],
+        ['benefits_screenings','Benefits Access','9,108','Apr 11, 2026','Screening sessions with eligibility results'],
+        ['benefits_enrollments','Benefits Access','5,914','Apr 11, 2026','Completed enrollments by benefit type'],
+        ['training_enrollments','Workforce Training','4,873','Apr 11, 2026','Track enrollment with completion status'],
+        ['unified_clients','Cross-program','14,206','Apr 11, 2026','De-duplicated client identity across all programs'],
+        ['survey_client_outcomes','Cross-program','1,288','Apr 10, 2026','Client Outcomes Survey responses'],
+      ],
+    },
+    insights: {
+      pills: ['All Programs','Workforce Training','Financial Coaching','Benefits Access','Career Placement','Small Business'],
+      weekly: { title: 'Weekly Coaching & Training Sessions', desc: 'Sessions across all tracks and coaches', values: [310,335,328,352,341,367,374,389,395,381,402,418] },
+      trend:  { title: 'Unique Clients (Monthly Trend)', desc: 'Distinct clients served by at least one program' },
+      dist:   { title: 'Wage Gain Distribution — 12-Month', desc: 'Real $/hr gain among followed-up placements',
+                labels: ['<$1/hr','$1–2/hr','$2–4/hr','$4–6/hr','$6–8/hr','$8+/hr'], values: [9,14,26,28,16,7] },
+      tracker: { title: 'Survey Response Tracker', desc: 'Client Outcomes Survey · All Tracks', pct: 64.4, note: '829 complete / 1,288 total (incl. partial)' },
+    },
+    storycraft: {
+      title: 'Quarterly Program Report: Workforce & Financial Coaching — Q1 2026',
+      date: 'Prepared for: Arapahoe County Workforce Development Board · April 2026 · Prepared by: Amir Haddad',
+      body: `<p><strong>Executive Summary</strong></p>
+        <p>Ascend Financial Futures served <strong>approximately 3,400 clients</strong> across our five programs in Q1 2026 — a <span class="story-highlight">7.2% increase</span> over Q4 2025. This report focuses on <strong>Career Placement</strong>: 214 clients placed year-to-date, up 18% over the same period last year, with Workforce Training accounting for 34% of total service volume. The Healthcare Careers track continues to drive the strongest wage outcomes.</p>
+        <br>
+        <p><strong>Key Findings</strong></p>
+        <p>Median real wage gain 12 months after placement reached <strong>$4.85/hour</strong> (CPI-adjusted), led by Healthcare Careers ($6.20/hr) and Skilled Trades ($5.75/hr). Average credit score change among coaching clients was <span class="story-highlight">+38 points</span>, and 65.8% of benefits screenings converted to enrollment. Twelve-month job retention rose to 71.2%, up 2.4 points over the 2023 cohort.</p>
+        <br>
+        <p><strong>Data Limitations</strong></p>
+        <p>Wage outcomes reflect placements with a 12-month follow-up wage on record (73.4% of the 2024 cohort); clients lost to follow-up skew toward shorter tenures, so reported medians may modestly overstate full-cohort gains. Credit score changes cover consented coaching clients only.</p>`,
+    },
+  },
+
+  // ───────────────────────── ACCESS TO CARE ─────────────────────────
+  care: {
+    label: 'Access to Care',
+    accent: '#4A3596',
+    org: { name: 'Wellspring Community Health Collaborative', location: 'Pueblo, CO', budget: '~$7M' },
+    personas: {
+      ed:   { name: 'Dr. Naomi Wright', first: 'Naomi',  role: 'Executive Director',          initials: 'NW' },
+      user: { name: 'Carlos Mendez',    first: 'Carlos', role: 'Care Coordination Director',  initials: 'CM' },
+      tech: { name: 'Aisha Bello',      first: 'Aisha',  role: 'Health Data Analyst',         initials: 'AB' },
+    },
+    login: { email: 'naomi@wellspringchc.org' },
+    sidebarRole: 'Admin • Program Pilot',
+    dashboard: {
+      subtitle: 'Unified analytics across your Care Coordination, Screening, Referral Network, Health Education, and Community Health Worker programs.',
+      stats: [
+        { label: 'Patients Connected to PCP (YTD)', value: '598',   delta: '↑ 16% vs. same period LY' },
+        { label: 'Screenings Completed (YTD)',      value: '1,684', delta: '↑ 11% vs. same period LY' },
+        { label: 'Closed-Loop Referral Rate',       value: '72.4%', delta: '↑ 5.1 pts vs. last year' },
+        { label: '30-Day No-Show Rate',             value: '14.2%', delta: '↓ 3.8 pts vs. last year' },
+        { label: 'Active CHW Caseload',             value: '1,236', delta: '↑ 4.0% vs. prior quarter' },
+        { label: 'Referral Partners',               value: '84',    delta: '↑ 9 new this year' },
+      ],
+      barTitle: 'Monthly Screenings — All Sites (2025)',
+      bars: { labels: MONTHS, values: [380,395,410,432,418,440,455,462,471,490,478,501] },
+      donutTitle: 'Service Mix by Program',
+      donut: {
+        center: '9.8K', centerLabel: 'encounters',
+        segments: [
+          { name: 'Care Coordination', pct: 31 }, { name: 'Screenings', pct: 27 },
+          { name: 'Referrals', pct: 19 }, { name: 'Health Education', pct: 13 },
+          { name: 'CHW Outreach', pct: 10 },
+        ],
+      },
+    },
+    dorothy: {
+      prompt: "How many high-risk patients were connected to a primary care provider within 30 days of screening, and what's our closed-loop referral rate?",
+      botResponse: "Great — I'll structure a report covering PCP linkage for high-risk patients and referral loop closure. Let me plan the sections:<br><br><strong>1. PCP Connection Overview</strong> — high-risk patients connected within 30 days<br><strong>2. Connection Timing</strong> — how quickly connections happen after screening<br><strong>3. Closed-Loop Referrals</strong> — confirmation rates by referral partner<br><strong>4. Confirmation Lag</strong> — pending confirmations and what they mean<br><br>I'll now generate the data intents for each section. You'll have a chance to review before I proceed. ➡️ <em>Sending to HITL review…</em>",
+    },
+    hitl: {
+      title: 'Review: PCP Linkage & Referral Loop',
+      description: 'Quantify primary-care linkage for high-risk patients by measuring 30-day PCP connection counts and rates, the overall closed-loop referral rate, partner-level referral outcomes, and the distribution of patients across risk tiers.',
+      intents: [
+        { name: 'high_risk_pcp_connection_count', details: [['Grain','overall'],['Filters','risk_tier: high; connection within 30 days of screening']] },
+        { name: 'pcp_connection_rate_30day',      details: [['Grain','per screening month'],['Filters','risk_tier: high']] },
+        { name: 'closed_loop_referral_rate',      details: [['Grain','overall'],['Filters','referrals with provider-confirmed completion only']] },
+        { name: 'referral_outcome_by_partner',    details: [['Grain','per partner organization']] },
+        { name: 'risk_tier_distribution',         details: [['Grain','per risk tier']] },
+      ],
+      knowledge: 'A referral counts as closed-loop only when the receiving provider confirms the visit occurred — patient self-report alone does not qualify',
+    },
+    report: {
+      title: 'High-Risk PCP Linkage — Closed-Loop Referral Analysis',
+      meta: ['🗂️ Program: Care Coordination', '📅 Generated: April 11, 2026', '📊 Data source: warehouse.curated.referral_outcomes', '👤 Requested by: Carlos Mendez · Reviewed by: Aisha Bello'],
+      curve: [8,18,28,38,48,57,65,72,78,83,87,90,93,95,96,97,98,99,99,100],
+      sections: [
+        `<h2>1. PCP Connection Overview</h2>
+          <p>Of <strong>612 patients</strong> flagged high-risk at screening in 2025, <strong>449 (73.4%)</strong> were connected to a primary care provider within 30 days. The median time to connection was 17 days. The overall closed-loop referral rate across all referral types was <strong>72.4%</strong>.</p>
+          <div class="insight-box"><p>💡 High-risk patients connected within 30 days showed a 41% lower 90-day ED utilization rate than those connected later or not at all.</p></div>
+          <table class="data-table">
+            <thead><tr><th>Metric</th><th>Value</th></tr></thead>
+            <tbody>
+              <tr><td>High-Risk Patients Screened (2025)</td><td><strong>612</strong></td></tr>
+              <tr><td>Connected to PCP ≤ 30 Days</td><td>449 (73.4%)</td></tr>
+              <tr><td>Median Days to Connection</td><td>17</td></tr>
+              <tr><td>Closed-Loop Referral Rate</td><td>72.4%</td></tr>
+              <tr><td>Referrals Pending Confirmation</td><td>18.2%</td></tr>
+            </tbody>
+          </table>`,
+        `<h2>2. Connection Timing</h2>
+          <p>Connections accumulated quickly in the first two weeks after screening — 48% of all 30-day connections occurred within 7 days, driven by warm handoffs at the screening site. Connections slowed markedly after day 21, suggesting the follow-up call cadence in week three is the binding constraint.</p>
+          <div class="report-chart" id="accumChart"></div>`,
+        `<h2>3. Closed-Loop Rate by Referral Partner</h2>
+          <p>Partners with embedded care coordinators or EHR-integrated reporting confirm visit completion fastest and most reliably. The long tail of smaller partners reports manually, depressing their measured rates.</p>
+          <table class="data-table">
+            <thead><tr><th>Partner</th><th>Referrals</th><th>Closed-Loop Rate</th></tr></thead>
+            <tbody>
+              <tr><td>Pueblo Community Health Center</td><td>312</td><td>81.4%</td></tr>
+              <tr><td>Parkview Primary Care</td><td>268</td><td>74.6%</td></tr>
+              <tr><td>Southern Colorado Family Medicine</td><td>214</td><td>70.1%</td></tr>
+              <tr><td>Mountain View Clinic Network</td><td>187</td><td>66.8%</td></tr>
+              <tr><td>Other partners (12)</td><td>156</td><td>58.3%</td></tr>
+            </tbody>
+          </table>`,
+        `<h2>4. Confirmation Lag & Interpretation</h2>
+          <p>The closed-loop rate counts only referrals with provider-confirmed completion. 18.2% of 2025 referrals are still awaiting partner confirmation, so the true closed-loop rate likely sits 4–6 points higher than reported.</p>
+          <div class="insight-box"><p>💡 <strong>Data limitation:</strong> Patient self-report of a completed visit does not count toward closed-loop status; confirmation depends on partner reporting cadence, which ranges from daily (EHR-integrated) to monthly (manual).</p></div>`,
+      ],
+    },
+    datahub: {
+      sources: [
+        { icon: '🩺', iconBg: 'var(--purple-bg)', iconColor: 'var(--purple-deep)', name: 'Clinic EHR Extract', detail: 'Nightly extract · 6 tables · Last sync: Today 08:14 AM<br>Encounters, problem lists, PCP assignment, visit confirmations' },
+        { icon: '📱', iconBg: 'var(--teal-light)', iconColor: 'var(--teal-dark)', name: 'CHW Field App', detail: 'Private database · 4 tables · Last sync: Today 06:00 AM<br>Field encounters, outreach attempts, social needs notes' },
+        { icon: '🔁', iconBg: '#FDE8EC', iconColor: 'var(--coral)', name: 'Referral Network Platform', detail: 'Private database · 3 tables · Last sync: Today 05:30 AM<br>Referrals, partner confirmations, loop-closure status' },
+        { icon: '📇', iconBg: '#FEF3C7', iconColor: '#92400E', name: 'Screening Registry', detail: 'Private database · 3 tables · Last sync: Today 08:14 AM<br>Screenings, risk scores, tier assignments' },
+        { icon: '📡', iconBg: 'var(--purple-bg)', iconColor: 'var(--purple-deep)', name: 'ADT Event Feed', detail: 'Hospital admit/discharge/transfer feed · Last sync: Today 08:14 AM<br>ED visits and inpatient events for attributed patients' },
+        { icon: '📊', iconBg: 'var(--teal-light)', iconColor: 'var(--teal-dark)', name: 'Public Data (Census + SDOH)', detail: 'Pre-integrated public datasets · Last sync: Apr 01, 2026<br>Census ACS demographics + AHRQ Social Determinants of Health, tract-level' },
+      ],
+      schema: [
+        ['screenings','Screenings','41,204','Apr 11, 2026','Screening events with instrument and site'],
+        ['risk_assessments','Screenings','22,051','Apr 11, 2026','Risk scores and tier assignments per patient'],
+        ['referrals','Referral Network','12,418','Apr 11, 2026','Outbound referrals with partner and reason'],
+        ['referral_outcomes','Referral Network','9,876','Apr 11, 2026','Partner confirmations and loop-closure status'],
+        ['pcp_connections','Care Coordination','6,142','Apr 11, 2026','PCP assignment events with days-from-screening'],
+        ['chw_encounters','CHW Outreach','28,317','Apr 11, 2026','Community health worker field encounters'],
+        ['adt_events','Care Coordination','17,930','Apr 11, 2026','ED and inpatient events for attributed patients'],
+        ['health_ed_sessions','Health Education','5,236','Apr 11, 2026','Group and one-on-one education sessions'],
+        ['unified_patients','Cross-program','19,802','Apr 11, 2026','De-duplicated patient identity across all programs'],
+        ['survey_patient_experience','Cross-program','968','Apr 10, 2026','Patient Experience Survey responses'],
+      ],
+    },
+    insights: {
+      pills: ['All Programs','Care Coordination','Screenings','Referrals','Health Education','CHW Outreach'],
+      weekly: { title: 'Weekly Patient Encounters', desc: 'Encounters across all sites and CHW teams', values: [980,1010,995,1060,1085,1120,1098,1150,1175,1190,1168,1210] },
+      trend:  { title: 'Unique Patients (Monthly Trend)', desc: 'Distinct patients served by at least one program' },
+      dist:   { title: 'Days to PCP Connection', desc: 'High-risk patients · days from screening',
+                labels: ['≤7 days','8–14 days','15–30 days','31–60 days','61+ days','Not yet connected'], values: [22,26,25,13,8,6] },
+      tracker: { title: 'Survey Response Tracker', desc: 'Patient Experience Survey · All Sites', pct: 69.8, note: '676 complete / 968 total (incl. partial)' },
+    },
+    storycraft: {
+      title: 'Quarterly Program Report: Care Coordination — Q1 2026',
+      date: 'Prepared for: Southern Colorado Regional Health Connector · April 2026 · Prepared by: Aisha Bello',
+      body: `<p><strong>Executive Summary</strong></p>
+        <p>Wellspring Community Health Collaborative recorded <strong>approximately 9,800 patient encounters</strong> in Q1 2026 — an <span class="story-highlight">11% increase</span> over Q4 2025. This report focuses on <strong>Care Coordination</strong>, which connected 598 patients to a primary care provider year-to-date. The closed-loop referral rate reached <span class="story-highlight">72.4%</span>, up 5.1 points over last year, across 84 referral partners.</p>
+        <br>
+        <p><strong>Key Findings</strong></p>
+        <p>Of high-risk patients screened in 2025, <strong>73.4% connected to a PCP within 30 days</strong> (median 17 days), and those connected early showed 41% lower 90-day ED utilization. The 30-day no-show rate fell to 14.2%, down 3.8 points, following CHW reminder outreach. The Patient Experience Survey closed with 968 responses; 81% of respondents rated the referral process "easy or very easy."</p>
+        <br>
+        <p><strong>Data Limitations</strong></p>
+        <p>Closed-loop counts depend on partner confirmation, and 18.2% of 2025 referrals remain pending — reported rates are therefore conservative. ED utilization comparisons are observational and do not control for differences between early- and late-connected patients.</p>`,
+    },
+  },
+
+  // ───────────────────────── VETERAN SERVICES ─────────────────────────
+  veterans: {
+    label: 'Veteran Services',
+    accent: '#1F1B3D',
+    org: { name: 'Sentinel Veteran Collective', location: 'Colorado Springs, CO', budget: '~$5.5M' },
+    personas: {
+      ed:   { name: 'James Whitfield', first: 'James', role: 'Executive Director',         initials: 'JW' },
+      user: { name: 'Tanya Brooks',    first: 'Tanya', role: 'Veteran Services Director',  initials: 'TB' },
+      tech: { name: 'Ryan Cho',        first: 'Ryan',  role: 'Data & Eligibility Analyst', initials: 'RC' },
+    },
+    login: { email: 'james@sentinelveterans.org' },
+    sidebarRole: 'Admin • Program Pilot',
+    dashboard: {
+      subtitle: 'Unified analytics across your Housing Navigation, Benefits Claims, Employment, Peer Support, and Crisis Response programs.',
+      stats: [
+        { label: 'Veterans Served (YTD)',          value: '812',   delta: '↑ 13% vs. same period LY' },
+        { label: 'Housing Placements (YTD)',       value: '104',   delta: '↑ 19% vs. same period LY' },
+        { label: 'Benefits Claims Filed (YTD)',    value: '327',   delta: '↑ 9% vs. same period LY' },
+        { label: 'Employment Connections (YTD)',   value: '138',   delta: '↑ 15% vs. same period LY' },
+        { label: 'Median Days to Stable Housing',  value: '64',    delta: '↓ 11 days vs. 2024' },
+        { label: 'Peer Support Sessions (YTD)',    value: '1,291', delta: '↑ 8% vs. same period LY' },
+      ],
+      barTitle: 'Monthly Veterans Served — All Programs (2025)',
+      bars: { labels: MONTHS, values: [168,172,180,176,185,192,198,204,211,218,209,224] },
+      donutTitle: 'Service Mix by Program',
+      donut: {
+        center: '2.4K', centerLabel: 'veterans served',
+        segments: [
+          { name: 'Housing Navigation', pct: 29 }, { name: 'Benefits Claims', pct: 25 },
+          { name: 'Employment', pct: 18 }, { name: 'Peer Support', pct: 17 },
+          { name: 'Crisis Response', pct: 11 },
+        ],
+      },
+    },
+    dorothy: {
+      prompt: "How many veterans we served last year were experiencing housing instability, and how many were connected to stable housing within 90 days?",
+      botResponse: "Great — I'll structure a report covering housing instability among the veterans we served and how quickly it was resolved. Let me plan the sections:<br><br><strong>1. Housing Instability Overview</strong> — veterans flagged unstable at intake in 2025<br><strong>2. 90-Day Placement Window</strong> — cumulative placements by days from intake<br><strong>3. Pathway Breakdown</strong> — placement rates by program pathway<br><strong>4. Stability Retention</strong> — six-month retention for placed veterans<br><br>I'll now generate the data intents for each section. You'll have a chance to review before I proceed. ➡️ <em>Sending to HITL review…</em>",
+    },
+    hitl: {
+      title: 'Review: Housing Stability Outcomes',
+      description: 'Quantify housing instability and resolution among veterans served by measuring the count flagged unstable at intake, placements into stable housing within 90 days, pathway-level placement rates, median days to placement, and six-month stability retention.',
+      intents: [
+        { name: 'housing_instability_count',     details: [['Grain','overall — calendar year 2025'],['Filters','VI-SPDAT score or self-reported instability flag at intake']] },
+        { name: 'stable_housing_90day_count',    details: [['Grain','overall'],['Filters','placement within 90 days of intake']] },
+        { name: 'placement_rate_by_pathway',     details: [['Grain','per program pathway'],['Filters','SSVF, HUD-VASH referral, rapid rehousing, landlord direct']] },
+        { name: 'median_days_to_placement',      details: [['Grain','overall']] },
+        { name: 'stability_retention_6mo',       details: [['Grain','per placement cohort'],['Filters','cohorts with a completed 6-month check']] },
+      ],
+      knowledge: 'Count both literal homelessness and at-risk situations (doubled-up, active eviction notice) as housing instability at intake',
+    },
+    report: {
+      title: 'Veteran Housing Stability — 90-Day Placement Analysis',
+      meta: ['🗂️ Program: Housing Navigation', '📅 Generated: April 11, 2026', '📊 Data source: warehouse.curated.housing_episodes', '👤 Requested by: Tanya Brooks · Reviewed by: Ryan Cho'],
+      curve: [5,11,18,26,34,42,50,57,64,70,76,81,86,90,93,95,97,98,99,100],
+      sections: [
+        `<h2>1. Housing Instability Overview</h2>
+          <p>Of the <strong>2,418 veterans served in 2025</strong>, <strong>684 (28.3%)</strong> were experiencing housing instability at intake — including both literal homelessness and at-risk situations such as doubled-up housing or an active eviction notice. Of those, <strong>417 (61.0%)</strong> were connected to stable housing within 90 days; the median time to placement was 64 days.</p>
+          <div class="insight-box"><p>💡 Veterans engaged by a peer-support specialist within the first week of intake reached stable housing 18 days faster on median than those who were not.</p></div>
+          <table class="data-table">
+            <thead><tr><th>Metric</th><th>Value</th></tr></thead>
+            <tbody>
+              <tr><td>Veterans Served (2025)</td><td><strong>2,418</strong></td></tr>
+              <tr><td>Housing Instability at Intake</td><td>684 (28.3%)</td></tr>
+              <tr><td>Stable Housing ≤ 90 Days</td><td>417 (61.0%)</td></tr>
+              <tr><td>Median Days to Placement</td><td>64</td></tr>
+              <tr><td>Still in Navigation</td><td>142</td></tr>
+            </tbody>
+          </table>`,
+        `<h2>2. Cumulative Placements by Days from Intake</h2>
+          <p>Half of all 90-day placements occurred within the first 50 days, with documentation readiness (DD-214, income verification) the most common driver of the slower half. Placements continue past day 90 — the window measures speed, not eventual success.</p>
+          <div class="report-chart" id="accumChart"></div>`,
+        `<h2>3. Pathway Breakdown</h2>
+          <p>SSVF Rapid Resolution carried the most volume and placed at the highest rate among major pathways. Landlord Direct Match — a small pilot with pre-committed units — placed fastest and merits expansion.</p>
+          <table class="data-table">
+            <thead><tr><th>Pathway</th><th>Veterans Routed</th><th>Placed ≤ 90 Days</th><th>Median Days</th></tr></thead>
+            <tbody>
+              <tr><td>SSVF Rapid Resolution</td><td>272</td><td>186 (68.4%)</td><td>51</td></tr>
+              <tr><td>HUD-VASH Referral</td><td>216</td><td>124 (57.4%)</td><td>78</td></tr>
+              <tr><td>Rapid Rehousing</td><td>150</td><td>78 (52.0%)</td><td>83</td></tr>
+              <tr><td>Landlord Direct Match</td><td>46</td><td>29 (63.0%)</td><td>44</td></tr>
+            </tbody>
+          </table>`,
+        `<h2>4. Stability Retention</h2>
+          <p>Six-month retention checks are complete for placements made through October 2025: <strong>87.6%</strong> of veterans placed remained stably housed at six months. Retention for November–December placements will be reported next quarter.</p>
+          <div class="insight-box"><p>💡 <strong>Data limitation:</strong> Housing instability is identified at intake via VI-SPDAT score or self-report; veterans who did not complete an intake assessment are excluded from the denominator.</p></div>`,
+      ],
+    },
+    datahub: {
+      sources: [
+        { icon: '🏠', iconBg: 'var(--purple-bg)', iconColor: 'var(--purple-deep)', name: 'HMIS Extract', detail: 'Nightly extract · 5 tables · Last sync: Today 08:14 AM<br>Housing episodes, placements, VI-SPDAT assessments' },
+        { icon: '📑', iconBg: 'var(--teal-light)', iconColor: 'var(--teal-dark)', name: 'VA Benefits Claims Exports', detail: 'Weekly export · 3 tables · Last sync: Apr 08, 2026<br>Claims filed, status, award outcomes for consented veterans' },
+        { icon: '🗂', iconBg: '#FDE8EC', iconColor: 'var(--coral)', name: 'Case Management System', detail: 'Private database · 6 tables · Last sync: Today 06:00 AM<br>Intakes, case notes, eligibility documents, service plans' },
+        { icon: '💼', iconBg: '#FEF3C7', iconColor: '#92400E', name: 'Employment Partner Feed', detail: 'Partner-reported · 2 tables · Last sync: Today 08:14 AM<br>Job connections, hires, 90-day employment checks' },
+        { icon: '🤝', iconBg: 'var(--purple-bg)', iconColor: 'var(--purple-deep)', name: 'Peer Support Logs', detail: 'Private database · 2 tables · Last sync: Today 08:14 AM<br>Peer specialist sessions and engagement timeline' },
+        { icon: '📊', iconBg: 'var(--teal-light)', iconColor: 'var(--teal-dark)', name: 'Public Data (Census + VA Open Data)', detail: 'Pre-integrated public datasets · Last sync: Apr 01, 2026<br>Census ACS veteran demographics + VA open datasets, county-level' },
+      ],
+      schema: [
+        ['veterans','Cross-program','9,214','Apr 11, 2026','Veteran records with service era and discharge status'],
+        ['intake_assessments','Cross-program','11,386','Apr 11, 2026','Intake assessments including VI-SPDAT and housing flags'],
+        ['housing_episodes','Housing Navigation','3,847','Apr 11, 2026','Housing instability episodes with start and resolution dates'],
+        ['housing_placements','Housing Navigation','1,212','Apr 11, 2026','Placements with pathway, unit type, and move-in date'],
+        ['benefits_claims','Benefits Claims','4,318','Apr 11, 2026','Claims filed with type, status, and award outcome'],
+        ['employment_connections','Employment','1,684','Apr 11, 2026','Job connections with employer and retention checks'],
+        ['peer_sessions','Peer Support','15,209','Apr 11, 2026','Peer specialist session log'],
+        ['crisis_contacts','Crisis Response','2,114','Apr 11, 2026','Crisis line and field response contacts'],
+        ['unified_veterans','Cross-program','9,840','Apr 11, 2026','De-duplicated veteran identity across all programs'],
+        ['survey_veteran_experience','Cross-program','742','Apr 10, 2026','Veteran Experience Survey responses'],
+      ],
+    },
+    insights: {
+      pills: ['All Programs','Housing Navigation','Benefits Claims','Employment','Peer Support','Crisis Response'],
+      weekly: { title: 'Weekly Service Contacts', desc: 'Contacts across all programs', values: [410,425,418,440,452,468,461,486,494,502,489,515] },
+      trend:  { title: 'Unique Veterans (Monthly Trend)', desc: 'Distinct veterans served by at least one program' },
+      dist:   { title: 'Days to Stable Housing', desc: 'Veterans flagged unstable at intake',
+                labels: ['≤30 days','31–60 days','61–90 days','91–120 days','121+ days','In progress'], values: [18,24,19,13,11,15] },
+      tracker: { title: 'Survey Response Tracker', desc: 'Veteran Experience Survey · All Programs', pct: 66.2, note: '491 complete / 742 total (incl. partial)' },
+    },
+    storycraft: {
+      title: 'Quarterly Program Report: Housing Navigation — Q1 2026',
+      date: 'Prepared for: El Paso County Veterans Coalition · April 2026 · Prepared by: Ryan Cho',
+      body: `<p><strong>Executive Summary</strong></p>
+        <p>Sentinel Veteran Collective served <strong>812 veterans</strong> in Q1 2026 — a <span class="story-highlight">13% increase</span> over the same period last year. This report focuses on <strong>Housing Navigation</strong>: 104 placements year-to-date, with median days to stable housing falling to <span class="story-highlight">64 days</span>, down 11 days from 2024. Housing Navigation accounted for 29% of total service volume.</p>
+        <br>
+        <p><strong>Key Findings</strong></p>
+        <p>Of the 684 veterans flagged for housing instability in 2025, <strong>61.0% reached stable housing within 90 days</strong>. SSVF Rapid Resolution remained the strongest major pathway (68.4% placed within 90 days), and the Landlord Direct Match pilot placed fastest at a median of 44 days. Six-month stability retention held at 87.6% for cohorts through October. Benefits claims filed rose 9% and employment connections rose 15% year-over-year.</p>
+        <br>
+        <p><strong>Data Limitations</strong></p>
+        <p>Housing instability is identified at intake; veterans who did not complete an intake assessment are excluded. Six-month retention for November–December placement cohorts is not yet available and will be reported next quarter. Employment figures are partner-reported and may lag.</p>`,
+    },
+  },
+};
+
+// ════════════════════════════════════════════════════
+// Vertical-aware rendering — every screen renders from V()
+// ════════════════════════════════════════════════════
+const DONUT_PALETTE = ['#3D1D72','#3BBFAD','#E85D75','#F5A623','#4A90D9'];
+
+function renderSidebars() {
+  const v = V();
+  document.querySelectorAll('.vertical-switch select').forEach(s => { s.value = STATE.vertical; });
+  document.querySelectorAll('.vertical-switch .vs-org-name').forEach(el => { el.textContent = v.org.name + ' · ' + v.org.location; });
+  document.querySelectorAll('.sidebar-footer .avatar').forEach(el => { el.textContent = v.personas.ed.initials; });
+  document.querySelectorAll('.sidebar-footer .user-name').forEach(el => { el.textContent = v.personas.ed.first; });
+  document.querySelectorAll('.sidebar-footer .user-role').forEach(el => { el.textContent = v.sidebarRole; });
+  const email = document.getElementById('emailInput');
+  if (email) email.value = v.login.email;
+  document.querySelectorAll('#verticalPicker .vp-card').forEach(c => c.classList.toggle('selected', c.dataset.v === STATE.vertical));
+}
+
+function renderDashboard() {
+  const v = V();
+  document.querySelector('#dashboard .dashboard-header').innerHTML =
+    '<h1>Welcome back, ' + v.personas.ed.first + ' 👋</h1><p>' + v.dashboard.subtitle + '</p>';
+  document.querySelector('#dashboard .dash-grid').innerHTML = v.dashboard.stats.map(s =>
+    '<div class="stat-card"><div class="stat-label">' + s.label + '</div><div class="stat-value">' + s.value + '</div><div class="stat-delta">' + s.delta + '</div></div>'
+  ).join('');
+  // Donut: stroke-dasharray segments with cumulative offsets (start at 25 = 12 o'clock)
+  let offset = 25;
+  const circles = v.dashboard.donut.segments.map((s, i) => {
+    const c = '<circle cx="21" cy="21" r="15.9" fill="transparent" stroke="' + DONUT_PALETTE[i] + '" stroke-width="4" stroke-dasharray="' + s.pct + ' ' + (100 - s.pct) + '" stroke-dashoffset="' + offset + '" stroke-linecap="round"/>';
+    offset = (offset - s.pct + 100) % 100;
+    return c;
+  }).join('');
+  const legend = v.dashboard.donut.segments.map((s, i) =>
+    '<span style="display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:2px;background:' + DONUT_PALETTE[i] + ';"></span>' + s.name + ' ' + s.pct + '%</span>'
+  ).join('');
+  document.querySelector('#dashboard .charts-row').innerHTML =
+    '<div class="chart-card"><h3>' + v.dashboard.barTitle + '</h3><div class="bar-chart" id="visitBars"></div></div>' +
+    '<div class="chart-card"><h3>' + v.dashboard.donutTitle + '</h3><div class="donut-container">' +
+    '<svg width="150" height="150" viewBox="0 0 42 42"><circle cx="21" cy="21" r="15.9" fill="transparent" stroke="#E5E7EB" stroke-width="4"/>' + circles + '</svg>' +
+    '<div class="donut-center"><div class="donut-value">' + v.dashboard.donut.center + '</div><div class="donut-label">' + v.dashboard.donut.centerLabel + '</div></div></div>' +
+    '<div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-top:8px; font-size:11px; color:var(--text-secondary);">' + legend + '</div></div>';
+}
+
+function renderDorothy() {
+  resetDorothyState();
+  const first = document.querySelector('#chatArea .chat-msg.bot');
+  if (first) {
+    first.innerHTML = 'Hi ' + V().personas.ed.first + '! 👋<br><br>' +
+      "I'm glad to help you shape your data analysis report.<br><br>" +
+      'To get started, can you tell me — in your own words — what kind of topic or question you want the report to address? It can be broad or specific, for example a business performance issue, a social or policy topic, trends over time, comparisons between groups, or something else entirely.<br><br>' +
+      'Once you share that, I can help you think through useful metrics, time frames, locations, or comparisons, and make sure the report is clear and actionable.';
+  }
+}
+
+function renderHitl() {
+  const h = V().hitl;
+  const items = h.intents.map((it, i) => {
+    const id = 'd' + (i + 1);
+    const details = it.details.map(d => '<span><span class="label">' + d[0] + ':</span> ' + d[1] + '</span>').join('');
+    return '<div class="intent-item" onclick="toggleDetail(\'' + id + '\')"><span class="intent-num">' + (i + 1) + '</span><span class="intent-name">' + it.name + '</span><span class="intent-chevron">⌄</span></div>' +
+           '<div class="intent-detail" id="' + id + '">' + details + '</div>';
+  }).join('\n');
+  document.querySelector('#hitl .hitl-card').innerHTML =
+    '<div class="hitl-card-header"><h3>' + h.title + '</h3><span class="hitl-badge">Data Intent</span></div>' +
+    '<p class="hitl-description">' + h.description + '</p>' +
+    '<div class="intent-label">🎯 Data Intents <span style="background:var(--bg-off);padding:2px 8px;border-radius:10px;font-size:11px;">' + h.intents.length + '</span></div>' +
+    items +
+    '<div class="knowledge-box"><textarea placeholder="Add knowledge or context (optional)...">' + h.knowledge + '</textarea></div>' +
+    '<div class="hitl-actions"><button class="btn-approve" onclick="navigateTo(\'report\')">✓ Approve</button><button class="btn-knowledge">➤ Submit Knowledge</button></div>';
+}
+
+function renderReport() {
+  const r = V().report;
+  document.querySelector('#report .report-container').innerHTML =
+    '<div class="report-header"><h1>' + r.title + '</h1><div class="report-meta">' + r.meta.map(m => '<span>' + m + '</span>').join('') + '</div></div>' +
+    r.sections.map(s => '<div class="report-section">' + s + '</div>').join('') +
+    '<div class="report-actions"><button class="btn-outline">📥 Export PDF</button><button class="btn-outline">📊 Export Data</button><button class="btn-outline" onclick="navigateTo(\'storycraft\')">📝 Send to StoryCraft</button></div>';
+}
+
+function renderDatahub() {
+  const d = V().datahub;
+  document.querySelector('#datahub .source-cards').innerHTML = d.sources.map(s =>
+    '<div class="source-card"><div class="source-header"><div class="source-icon" style="background:' + s.iconBg + '; color:' + s.iconColor + ';">' + s.icon + '</div><h3>' + s.name + '</h3><span class="source-status connected">Connected</span></div><div class="source-detail">' + s.detail + '</div></div>'
+  ).join('');
+  document.querySelector('#datahub .schema-table tbody').innerHTML = d.schema.map(r =>
+    '<tr><td><strong>' + r[0] + '</strong></td><td>' + r[1] + '</td><td>' + r[2] + '</td><td>' + r[3] + '</td><td>' + r[4] + '</td></tr>'
+  ).join('');
+}
+
+function renderInsights() {
+  const ins = V().insights;
+  document.querySelector('#insights .insights-filters').innerHTML =
+    ins.pills.map((p, i) => '<button class="filter-pill' + (i === 0 ? ' active' : '') + '">' + p + '</button>').join('');
+  document.querySelector('#insights .insights-grid').innerHTML =
+    '<div class="insight-card"><h3>' + ins.weekly.title + '</h3><p class="insight-desc">' + ins.weekly.desc + '</p><div class="freshness">Updated today at 08:14 AM ET</div><div class="mini-bars" id="weeklyBars"></div></div>' +
+    '<div class="insight-card"><h3>' + ins.trend.title + '</h3><p class="insight-desc">' + ins.trend.desc + '</p><div class="freshness">Updated today at 08:14 AM ET</div><div class="line-chart-mock"><svg viewBox="0 0 300 80" preserveAspectRatio="none"><polyline points="0,60 30,55 60,48 90,42 120,38 150,35 180,30 210,25 240,22 270,18 300,15" fill="none" stroke="var(--purple-deep)" stroke-width="2"/><polyline points="0,60 30,55 60,48 90,42 120,38 150,35 180,30 210,25 240,22 270,18 300,15" fill="url(#grad)" stroke="none"/><defs><linearGradient id="grad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--purple-deep)" stop-opacity="0.15"/><stop offset="100%" stop-color="var(--purple-deep)" stop-opacity="0"/></linearGradient></defs></svg></div></div>' +
+    '<div class="insight-card"><h3>' + ins.dist.title + '</h3><p class="insight-desc">' + ins.dist.desc + '</p><div class="freshness">Updated today at 08:14 AM ET</div><div class="mini-bars" id="hhBars"></div></div>' +
+    '<div class="insight-card"><h3>' + ins.tracker.title + '</h3><p class="insight-desc">' + ins.tracker.desc + '</p><div class="freshness">Updated today at 08:14 AM ET</div>' +
+    '<div style="display:flex; align-items:center; gap:16px; margin-top:8px;"><div style="flex:1; background:var(--border-light); border-radius:8px; height:16px; overflow:hidden;"><div style="width:' + ins.tracker.pct + '%; height:100%; background: linear-gradient(90deg, var(--purple-deep), var(--purple-light)); border-radius:8px;"></div></div><span style="font-size:20px; font-weight:700; color:var(--purple-deep);">' + ins.tracker.pct + '%</span></div>' +
+    '<div style="font-size:11px; color:var(--text-secondary); margin-top:6px;">' + ins.tracker.note + '</div></div>';
+}
+
+function renderStorycraft() {
+  const s = V().storycraft;
+  document.querySelector('#storycraft .story-preview').innerHTML =
+    '<div class="story-title">' + s.title + '</div><div class="story-date">' + s.date + '</div><div class="story-body">' + s.body + '</div>';
+}
+
+function applyVertical(id) {
+  if (!VERTICALS[id]) return;
+  STATE.vertical = id;
+  document.documentElement.style.setProperty('--accent', V().accent);
+  renderSidebars();
+  renderDashboard();
+  renderDorothy();
+  renderHitl();
+  renderReport();
+  renderDatahub();
+  renderInsights();
+  renderStorycraft();
+  // Containers were rebuilt — re-init all charts so a live switch re-renders cleanly
+  initDashCharts();
+  initInsightsCharts();
+  initReportCharts();
+  // If the user is mid-screen, replay screen-specific animations for the new vertical
+  const active = document.querySelector('.screen.active');
+  if (active && active.id === 'dorothy') autoPlayDorothy();
+  if (active && active.id === 'hitl') initHitlReveal();
+}
+
+// Sidebar switcher entry point — same as applyVertical, plus a toast
+function switchVertical(id) {
+  applyVertical(id);
+  showToast('Demo re-skinned: ' + V().org.name + ' (' + V().label + ')');
+}
+
+function enterApp() {
+  navigateTo('dashboard');
+}
+
+// Build the login picker and inject a compact switcher into every sidebar copy
+function buildVerticalControls() {
+  const picker = document.getElementById('verticalPicker');
+  if (picker) {
+    picker.innerHTML = Object.keys(VERTICALS).map(k => {
+      const v = VERTICALS[k];
+      return '<div class="vp-card" data-v="' + k + '" onclick="applyVertical(\'' + k + '\')">' +
+        '<span class="vp-dot" style="background:' + v.accent + ';"></span>' +
+        '<div><div class="vp-label">' + v.label + '</div><div class="vp-org">' + v.org.name + ' · ' + v.org.location + ' · ' + v.org.budget + ' budget</div></div></div>';
+    }).join('');
+  }
+  const options = Object.keys(VERTICALS).map(k => '<option value="' + k + '">' + VERTICALS[k].label + '</option>').join('');
+  document.querySelectorAll('.sidebar').forEach(sb => {
+    const div = document.createElement('div');
+    div.className = 'vertical-switch';
+    div.innerHTML = '<div class="vs-label">SDoH Vertical</div><select onchange="switchVertical(this.value)">' + options + '</select><span class="vs-org-name"></span><span class="vs-tag">Illustrative demo · sample data</span>';
+    sb.insertBefore(div, sb.querySelector('.sidebar-footer'));
+  });
+}
+
+// Bootstrap — script sits at the end of <body>, so the DOM is ready
+buildVerticalControls();
+applyVertical('hunger');
 </script>
 </body>
 </html>

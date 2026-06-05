@@ -1,6 +1,8 @@
 # Data Love AI — Interactive Demo
 
-A self-contained, clickable HTML prototype of the **Data Love AI platform** built for a generic, multi-program food security nonprofit (an organization running a Pantry Network alongside School Meals, Senior Nutrition, SNAP Outreach, and Mobile & Education programs). The demo shows stakeholders the end-to-end experience: logging in, asking Dorothy (the AI Data Officer) a question in natural language, watching the AI plan and assemble a report, reviewing data intents before SQL runs, and exporting a final stakeholder-ready document.
+A self-contained, clickable HTML prototype of the **Data Love AI platform**, re-skinnable across **five SDoH verticals** — Hunger, Housing, Economic Stability, Access to Care, and Veteran Services. Each vertical presents a fictional Colorado nonprofit with its own personas, KPIs, charts, Dorothy question, HITL moment, report, and StoryCraft narrative. Pick a vertical on the login screen, or switch live from the sidebar. The demo shows stakeholders the end-to-end experience: logging in, asking Dorothy (the AI Data Officer) a question in natural language, watching the AI plan and assemble a report, reviewing data intents before SQL runs, and exporting a final stakeholder-ready document.
+
+> **Illustrative demo — sample data.** All organizations, people, and numbers are fictional.
 
 ---
 
@@ -8,7 +10,7 @@ A self-contained, clickable HTML prototype of the **Data Love AI platform** buil
 
 | File | Purpose |
 | --- | --- |
-| `data_love_demo.html` | The full interactive demo — a single self-contained HTML file with embedded CSS and JS. **Open this in a browser to view.** |
+| `index.html` | The full interactive demo — a single self-contained HTML file with embedded CSS and JS. **Open this in a browser to view.** Served live via GitHub Pages. |
 | `Data Love AI Demo 2026-04-11.gif` | Reference recording (animated GIF) of an earlier version of the demo. |
 | `Data Love AI Demo 2026-04-11.mov` | Reference recording (MOV) of an earlier version. |
 | `README.md` | This file. |
@@ -21,32 +23,33 @@ A self-contained, clickable HTML prototype of the **Data Love AI platform** buil
 The demo is a single HTML file with no build step or dependencies.
 
 **Option A — Open directly:**
-Double-click `data_love_demo.html`. It will open in your default browser. Some browsers restrict local file capabilities, but for this static demo it works fine.
+Double-click `index.html`. It will open in your default browser. Some browsers restrict local file capabilities, but for this static demo it works fine.
 
 **Option B — Local server (recommended for the smoothest experience):**
 
 ```bash
-cd "demo_20260411"
 python3 -m http.server 8000
 ```
 
-Then open <http://localhost:8000/data_love_demo.html>.
+Then open <http://localhost:8000/index.html>.
 
 **Best viewed at:** 1440×900 or larger. Designed for laptop/desktop screens. Not yet mobile-optimized.
 
 ---
 
-## The demo scenario
+## The demo scenarios — five SDoH verticals
 
-The demo presents a fictional food security nonprofit running **five programs**:
+All scenario content lives in a single `VERTICALS` config object in `index.html`; every screen renders from the active vertical. Each vertical has a buyer (ED/CEO), a primary user (Program/Services Director), and a technical champion (Data/Outcomes Manager):
 
-1. **Pantry Network** — physical food pantries (the program the scripted demo focuses on)
-2. **School Meals & Backpack** — school-site breakfast/lunch + weekend backpack distribution
-3. **Senior Nutrition** — home-delivered meals + congregate dining
-4. **SNAP Outreach** — application support + recertification follow-up
-5. **Mobile & Education** — pop-up distributions and nutrition/cooking classes
+| Vertical | Organization | Accent | Personas |
+| --- | --- | --- | --- |
+| **Hunger** | Harvest Bridge Network — Denver, CO (~$8.5M) | Coral | Maya Chen (ED) · David Okafor (Program Dir.) · Priya Nair (Data Mgr.) |
+| **Housing** | Cornerstone Home Partners — Longmont, CO (~$9M) | Teal | Ruth Delgado (ED) · Marcus Bell (Family Services Dir.) · Lena Park (Impact & Data Mgr.) |
+| **Economic Stability** | Ascend Financial Futures — Aurora, CO (~$6M) | Gold | Daniel Osei (CEO) · Sofia Reyes (Workforce Program Dir.) · Amir Haddad (Data & Outcomes Lead) |
+| **Access to Care** | Wellspring Community Health Collaborative — Pueblo, CO (~$7M) | Purple | Dr. Naomi Wright (ED) · Carlos Mendez (Care Coordination Dir.) · Aisha Bello (Health Data Analyst) |
+| **Veteran Services** | Sentinel Veteran Collective — Colorado Springs, CO (~$5.5M) | Ink | James Whitfield (ED) · Tanya Brooks (Veteran Services Dir.) · Ryan Cho (Data & Eligibility Analyst) |
 
-District labels (North / East / Central / West / South) replace the original boroughs and apply universally to any service area.
+The original food-security scenario is preserved unchanged as the **Hunger** vertical: a nonprofit running a Pantry Network alongside School Meals, Senior Nutrition, SNAP Outreach, and Mobile & Education programs, with district labels (North / East / Central / West / South) that apply universally to any service area.
 
 ## What's in the demo
 
