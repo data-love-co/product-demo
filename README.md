@@ -57,14 +57,16 @@ The demo is a single-page app with eight "screens" the user can navigate between
 
 | Screen | What it shows |
 | --- | --- |
-| **Login** | Branded login card with the Data Love Co color palette and DM Sans/Space Grotesk typography. |
-| **Dashboard** | Welcome panel + KPIs (people served YTD, reports generated, active program sites), the product suite (Dorothy, DataHub, DataFlow, Insights Dash, StoryCraft, PolicyPulse), and two charts: monthly service volume across all programs + a "Service Mix by Program" donut. |
-| **Dorothy** | The AI chat experience. **Auto-plays on entry:** the prompt types itself into a wrapping textarea, the bot streams its response, and a 7-stage pipeline panel animates. *Centerpiece of the demo.* |
-| **HITL Review** | "Human-in-the-Loop" review screen. Surfaces the data intents Dorothy generated so the user can approve them (or attach context) before SQL runs. |
-| **Report** | The final auto-generated report — Pantry Network's Neighbor Experience Survey participation analysis — with sections, embedded bar chart, summary tables, and export actions. |
-| **DataHub** | Schema/lineage view of six connected data sources spanning all programs (Pantry Network Operations, School Meals & Backpack, Senior Nutrition System, SNAP Outreach Tracker, Survey Platform, Public Data) and a unified `warehouse.curated.*` schema explorer showing 10 tables across programs. |
-| **Insights Dash** | A self-serve analytics dashboard with **program filters** (All Programs / Pantry / School Meals / Senior / SNAP / Mobile & Education) and four insight cards. |
-| **StoryCraft** | Auto-narrative report builder — drafts a quarterly Pantry Network write-up addressed to a stakeholder (Regional Food Policy Office), framed as one of multiple program reports. |
+| **Login** | Branded login card with the **SDoH vertical picker** (5 cards — selecting one re-skins the entire demo), Data Love Co color palette, and DM Sans/Space Grotesk typography. |
+| **Dashboard** | Welcome panel + KPIs (4–6 stat cards per vertical), the product suite (Dorothy, DataHub, DataFlow, Insights Dash, StoryCraft, PolicyPulse), and two charts: monthly volume across all programs + a "Service Mix by Program" donut. |
+| **Dorothy** | The AI chat experience. **Auto-plays on entry:** the active vertical's prompt types itself into a wrapping textarea, the bot streams its response, and a 7-stage pipeline panel animates. *Centerpiece of the demo.* |
+| **HITL Review** | "Human-in-the-Loop" review screen. Surfaces the data intents Dorothy generated (5 per vertical, with grain/filter details) so the user can approve them (or attach context) before SQL runs. |
+| **Report** | The final auto-generated report for the active vertical's question (e.g., Hunger: the Neighbor Experience Survey participation analysis) — 4 sections, embedded accumulation chart, summary tables, data-limitation callouts, and export actions. |
+| **DataHub** | Schema/lineage view of six connected data sources per vertical and a unified `warehouse.curated.*` schema explorer showing 10 tables across programs. |
+| **Insights Dash** | A self-serve analytics dashboard with **program filters** (per vertical) and four insight cards: weekly volume, monthly trend, a distribution chart, and a survey response tracker. |
+| **StoryCraft** | Auto-narrative report builder — drafts a quarterly program write-up addressed to a fictional stakeholder (e.g., Regional Food Policy Office for Hunger). |
+
+Every screen has a compact **"SDoH Vertical" switcher** in the sidebar — changing it re-renders all screens and charts live, no reload.
 
 ---
 
@@ -87,7 +89,7 @@ All references to specific organizations have been removed and the data model ha
 | Insights filters: districts | **Programs** (All / Pantry Network / School Meals / Senior Nutrition / SNAP Outreach / Mobile & Education) |
 | StoryCraft: a single quarterly pantry utilization report | **Quarterly Program Report: Pantry Network**, explicitly framed as one of multiple program reports |
 
-**Kept intentionally:** "Dorothy" (the AI agent name), "Data Love Co" / "Data Love AI" (the platform brand), and "Jasmine" as the demo user. Public datasets (Census ACS, AHRQ SDOH) are kept since any nonprofit can connect to them.
+**Kept intentionally:** "Dorothy" (the AI agent name) and "Data Love Co" / "Data Love AI" (the platform brand). The logged-in demo user is each vertical's Executive Director persona (e.g., Maya Chen for Hunger). Public datasets (Census ACS, AHRQ SDOH) are kept since any nonprofit can connect to them.
 
 ### 2. Interactive typing & response animation
 The Dorothy chat screen feels alive without any extra controls:
@@ -114,14 +116,15 @@ The Dorothy chat screen feels alive without any extra controls:
 The demo is intentionally one file so anyone can open it without setup. Internally it's a tiny single-page app:
 
 ```
-data_love_demo.html
-├── <style>           Embedded CSS with CSS custom properties (design tokens)
+index.html
+├── <style>           Embedded CSS with CSS custom properties (design tokens, incl. per-vertical --accent)
 ├── Screens           One <div class="screen"> per page (login, dashboard, dorothy, hitl, report, datahub, insights, storycraft)
-├── Floating widgets  Demo controls (top right), data-freshness pill (bottom right), toast
-└── <script>          Navigation, typewriter, streaming, pipeline animation, demo controls
+├── Floating widgets  Data-freshness pill (bottom right), toast
+└── <script>          VERTICALS config (all scenario content) + render functions, navigation,
+                      typewriter, streaming, pipeline animation, vertical picker/switcher
 ```
 
-Navigation toggles `.active` on screens. There is no router, no framework, no build step.
+Navigation toggles `.active` on screens. Each vertical's content renders from `VERTICALS[STATE.vertical]`; switching verticals re-renders every screen and re-initializes the charts. The choice is held in memory only (no localStorage). There is no router, no framework, no build step.
 
 ---
 
