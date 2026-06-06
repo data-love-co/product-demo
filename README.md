@@ -134,6 +134,19 @@ If you want to compare the live demo to the original recording, both `.gif` and 
 
 ---
 
+## Guided tour, deep links & embedding
+
+- **Guided tour:** a hand-rolled 7-step coachmark tour (dashboard → Dorothy → HITL → report → StoryCraft → CTA) pulling org/persona/question text from the active vertical. Start it with the **"✦ Start guided tour"** button in the dashboard header, or via URL. Esc or Skip exits; Back/Next navigate (screen changes re-init charts). The overlay renders inside the app's own document, so it stays contained when embedded in an iframe.
+- **URL parameters:**
+  - `?vertical=hunger|housing|economic|care|veterans` — boot directly into that vertical (skips the landing picker)
+  - `?tour=auto` — auto-start the guided tour after load
+  - `?embed=1` — skip the login screen entirely (for iframe embeds)
+  - Example: `index.html?vertical=housing&tour=auto&embed=1`
+- **Responsive:** below ~900px the sidebar collapses into a horizontal top bar, grids stack to 1–2 columns, and tour tooltips clamp to the viewport — so the demo is usable inside an iframe column or on a phone.
+- **WordPress embedding:** see [`wordpress/README.md`](wordpress/README.md) for a copy-paste Custom HTML snippet and an optional `[datalove_demo]` shortcode plugin.
+
+---
+
 ## Known limitations of this prototype
 
 This is a **visual prototype**, not a working product. Specifically:

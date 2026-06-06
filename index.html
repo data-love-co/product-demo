@@ -320,6 +320,68 @@ body { font-family: 'DM Sans', sans-serif; color: var(--text-primary); backgroun
 .vertical-switch select option { color: var(--text-primary); }
 .vertical-switch .vs-org-name { display: block; font-size: 11px; color: rgba(255,255,255,0.7); font-weight: 500; margin-top: 8px; }
 .vertical-switch .vs-tag { display: block; font-size: 9px; letter-spacing: 0.6px; text-transform: uppercase; color: rgba(255,255,255,0.35); margin-top: 2px; }
+
+/* ── GUIDED TOUR ── */
+.dashboard-header { position: relative; }
+.btn-tour { position: absolute; top: 34px; right: 40px; padding: 9px 18px; border: 1.5px solid var(--accent); color: var(--accent); background: white; border-radius: 22px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.2s; }
+.btn-tour:hover { background: var(--accent); color: white; }
+#tourShield { position: fixed; inset: 0; z-index: 600; display: none; }
+#tourSpot { position: fixed; z-index: 601; border-radius: 10px; box-shadow: 0 0 0 9999px rgba(26,26,46,0.55); pointer-events: none; display: none; transition: top 0.25s ease, left 0.25s ease, width 0.25s ease, height 0.25s ease; }
+#tourSpot.tour-center { box-shadow: none; background: rgba(26,26,46,0.55); border-radius: 0; transition: none; }
+#tourTip { position: fixed; z-index: 602; width: min(340px, calc(100vw - 24px)); background: white; border-radius: 12px; box-shadow: var(--shadow-lg); padding: 18px 20px; display: none; }
+#tourTip .tour-step-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; }
+#tourTip h4 { font-size: 15px; font-weight: 700; margin-bottom: 6px; color: var(--text-primary); }
+#tourTip p { font-size: 13px; line-height: 1.6; color: var(--text-secondary); margin-bottom: 14px; }
+#tourTip .tour-cta { display: none; align-items: center; justify-content: center; gap: 6px; padding: 10px 18px; margin-bottom: 14px; background: var(--teal); color: white; border-radius: 22px; font-size: 13px; font-weight: 600; text-decoration: none; transition: background 0.2s; }
+#tourTip .tour-cta:hover { background: var(--teal-dark); }
+.tour-actions { display: flex; gap: 8px; align-items: center; }
+.tour-actions .tour-spacer { flex: 1; }
+.tour-actions button { padding: 7px 14px; border-radius: 18px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.2s; }
+.tour-actions .tour-back, .tour-actions .tour-skip { border: 1px solid var(--border); background: white; color: var(--text-secondary); }
+.tour-actions .tour-back:hover, .tour-actions .tour-skip:hover { border-color: var(--purple-mid); color: var(--purple-mid); }
+.tour-actions .tour-next { border: none; background: var(--purple-deep); color: white; }
+.tour-actions .tour-next:hover { background: var(--purple-mid); }
+
+/* ── RESPONSIVE / EMBED ── */
+@media (max-width: 900px) {
+  .app-shell { flex-direction: column; }
+  .sidebar { width: 100%; height: auto; flex-direction: row; align-items: center; gap: 4px; padding: 8px 10px; overflow-x: auto; overflow-y: hidden; flex-shrink: 0; }
+  .sidebar .logo-mark { padding: 0 8px 0 0; margin-bottom: 0; flex-shrink: 0; }
+  .sidebar .logo-img, .sidebar .logo-mark .logo-img.sidebar-logo { height: 20px; }
+  .sidebar .section-label { display: none; }
+  .sidebar nav { display: flex; flex: 1; align-items: center; gap: 2px; }
+  .sidebar nav a { padding: 8px 10px; border-left: none; border-bottom: 3px solid transparent; white-space: nowrap; font-size: 12px; gap: 6px; }
+  .sidebar nav a.active { border-left-color: transparent; border-bottom-color: var(--accent); }
+  .sidebar nav a svg { width: 16px; height: 16px; }
+  .sidebar .sidebar-footer { display: none; }
+  .vertical-switch { border-top: none; padding: 0 0 0 8px; flex-shrink: 0; }
+  .vertical-switch .vs-label, .vertical-switch .vs-org-name, .vertical-switch .vs-tag { display: none; }
+  .vertical-switch select { width: auto; font-size: 11px; padding: 6px 8px; }
+  .dashboard-header { padding: 20px 16px 12px; }
+  .dashboard-header h1 { font-size: 20px; }
+  .btn-tour { position: static; display: block; margin-top: 10px; }
+  .dash-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 0 16px 16px; }
+  .product-modules { padding: 0 16px 24px; }
+  .modules-grid { grid-template-columns: repeat(2, 1fr); }
+  .charts-row { grid-template-columns: 1fr; padding: 0 16px 24px; }
+  .insights-grid { grid-template-columns: 1fr; }
+  .source-cards { grid-template-columns: 1fr; }
+  .hitl-container, .report-container, .datahub-container, .insights-container, .story-container { padding: 20px 16px; }
+  .dorothy-layout { flex-direction: column; }
+  .dorothy-main { min-height: 0; }
+  .pipeline-panel { width: 100%; border-left: none; border-top: 1px solid var(--border); max-height: 200px; flex-shrink: 0; }
+  .chat-area { padding: 16px; }
+  .chat-msg { max-width: 88%; }
+  .chat-input-bar { padding: 12px 16px; }
+  .login-card { width: min(440px, calc(100vw - 32px)); padding: 32px 24px; }
+  .data-freshness-global { display: none; }
+  .schema-table { overflow-x: auto; }
+}
+@media (max-width: 560px) {
+  .dash-grid, .modules-grid { grid-template-columns: 1fr; }
+  .sidebar nav a { font-size: 0; gap: 0; }
+  .sidebar nav a svg { width: 18px; height: 18px; }
+}
 </style>
 </head>
 <body>
@@ -2059,7 +2121,8 @@ function renderSidebars() {
 function renderDashboard() {
   const v = V();
   document.querySelector('#dashboard .dashboard-header').innerHTML =
-    '<h1>Welcome back, ' + v.personas.ed.first + ' 👋</h1><p>' + v.dashboard.subtitle + '</p>';
+    '<h1>Welcome back, ' + v.personas.ed.first + ' 👋</h1><p>' + v.dashboard.subtitle + '</p>' +
+    '<button class="btn-tour" onclick="startTour()" title="Walk through the demo step by step">✦ Start guided tour</button>';
   document.querySelector('#dashboard .dash-grid').innerHTML = v.dashboard.stats.map(s =>
     '<div class="stat-card"><div class="stat-label">' + s.label + '</div><div class="stat-value">' + s.value + '</div><div class="stat-delta">' + s.delta + '</div></div>'
   ).join('');
@@ -2148,6 +2211,7 @@ function renderStorycraft() {
 
 function applyVertical(id) {
   if (!VERTICALS[id]) return;
+  if (typeof TOUR !== 'undefined' && TOUR.active) endTour();
   STATE.vertical = id;
   document.documentElement.style.setProperty('--accent', V().accent);
   renderSidebars();
@@ -2198,9 +2262,206 @@ function buildVerticalControls() {
   });
 }
 
+// ════════════════════════════════════════════════════
+// GUIDED TOUR — hand-rolled coachmark engine.
+// Overlay elements live inside the app's own document, so the
+// tour stays fully contained when the demo runs in an iframe.
+// ════════════════════════════════════════════════════
+const TOUR = { active: false, idx: 0, steps: [] };
+const CALENDLY_URL = 'https://calendly.com/dataloveco/nonprofit-data-insights-interview';
+
+function truncateText(s, n) {
+  return s.length > n ? s.slice(0, n - 1).trimEnd() + '…' : s;
+}
+
+// Steps are rebuilt at tour start from the active vertical, so the
+// wording is vertical-specific. Selectors are structural and exist
+// for every vertical (all screens render from the VERTICALS config).
+function buildTourSteps() {
+  const v = V();
+  return [
+    { screen: 'dashboard', selector: '.dashboard-header', placement: 'bottom',
+      title: 'Welcome to Data Love AI',
+      body: 'This is how ' + v.org.name + ' uses Data Love AI — from a plain-English question to a funder-ready story. Use Next to walk through, or Skip anytime.' },
+    { screen: 'dashboard', selector: '.dash-grid .stat-card', placement: 'bottom',
+      title: 'Every program, one dashboard',
+      body: '"' + v.dashboard.stats[0].label + '" is at ' + v.dashboard.stats[0].value + ' (' + v.dashboard.stats[0].delta + ') — live KPIs unified across all of ' + v.org.name + "'s programs." },
+    { screen: 'dorothy', selector: '.chat-input-bar', placement: 'top',
+      title: 'Ask in plain English',
+      body: 'No SQL, no report builders. ' + v.personas.ed.first + ' simply asks: "' + truncateText(v.dorothy.prompt, 150) + '"' },
+    { screen: 'hitl', selector: '.hitl-card', placement: 'right',
+      title: 'Human-in-the-Loop checkpoint',
+      body: 'Dorothy pauses to confirm what you meant before running anything. Staged schema narrowing and deterministic computation mean no hallucinated answers — you approve the intent, then it runs.' },
+    { screen: 'report', selector: '.report-section', placement: 'right',
+      title: 'A validated, source-grounded report',
+      body: 'Every figure is computed from ' + v.org.name + "'s warehouse — sources cited, data limitations called out, nothing invented." },
+    { screen: 'storycraft', selector: '.story-preview', placement: 'right',
+      title: 'Funder-ready in seconds',
+      body: 'StoryCraft turns the analysis into a stakeholder narrative — ready to export, edit, or share.' },
+    { screen: 'storycraft', selector: null, placement: 'center', cta: true,
+      title: 'See it with your data',
+      body: "That's the loop: ask → confirm → validated report → story. Book a walkthrough and see Dorothy answer your organization's questions." },
+  ];
+}
+
+function ensureTourDom() {
+  if (document.getElementById('tourShield')) return;
+  const shield = document.createElement('div');
+  shield.id = 'tourShield';
+  document.body.appendChild(shield);
+  const spot = document.createElement('div');
+  spot.id = 'tourSpot';
+  document.body.appendChild(spot);
+  const tip = document.createElement('div');
+  tip.id = 'tourTip';
+  tip.innerHTML = '<div class="tour-step-label"></div><h4></h4><p></p>' +
+    '<a class="tour-cta" href="' + CALENDLY_URL + '" target="_blank" rel="noopener">📅 Book a walkthrough</a>' +
+    '<div class="tour-actions">' +
+    '<button class="tour-back" onclick="showTourStep(TOUR.idx - 1)">← Back</button>' +
+    '<span class="tour-spacer"></span>' +
+    '<button class="tour-skip" onclick="endTour()">Skip</button>' +
+    '<button class="tour-next" onclick="showTourStep(TOUR.idx + 1)">Next →</button>' +
+    '</div>';
+  document.body.appendChild(tip);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && TOUR.active) endTour(); });
+  window.addEventListener('resize', repositionTour);
+  document.addEventListener('scroll', repositionTour, true);
+}
+
+function startTour() {
+  ensureTourDom();
+  TOUR.steps = buildTourSteps();
+  TOUR.active = true;
+  document.getElementById('tourShield').style.display = 'block';
+  showTourStep(0);
+}
+
+function endTour() {
+  TOUR.active = false;
+  ['tourShield', 'tourSpot', 'tourTip'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+}
+
+function showTourStep(i) {
+  if (!TOUR.active) return;
+  if (i < 0) i = 0;
+  if (i >= TOUR.steps.length) { endTour(); return; }
+  TOUR.idx = i;
+  const step = TOUR.steps[i];
+  const current = document.querySelector('.screen.active');
+  const needsNav = !current || current.id !== step.screen;
+  if (needsNav) navigateTo(step.screen); // navigateTo re-inits that screen's charts
+  // Wait out the screen fade-in (0.4s translate) before measuring rects
+  setTimeout(() => { if (TOUR.active && TOUR.idx === i) placeTourStep(step); }, needsNav ? 480 : 60);
+}
+
+function placeTourStep(step) {
+  const tip = document.getElementById('tourTip');
+  tip.querySelector('.tour-step-label').textContent = 'Step ' + (TOUR.idx + 1) + ' of ' + TOUR.steps.length;
+  tip.querySelector('h4').textContent = step.title;
+  tip.querySelector('p').textContent = step.body;
+  tip.querySelector('.tour-back').style.visibility = TOUR.idx === 0 ? 'hidden' : 'visible';
+  tip.querySelector('.tour-next').textContent = TOUR.idx === TOUR.steps.length - 1 ? 'Finish ✓' : 'Next →';
+  tip.querySelector('.tour-cta').style.display = step.cta ? 'flex' : 'none';
+  document.getElementById('tourSpot').style.display = 'block';
+  tip.style.display = 'block';
+  let el = null;
+  if (step.selector) {
+    el = document.getElementById(step.screen).querySelector(step.selector);
+    if (!el) { showTourStep(TOUR.idx + 1); return; } // defensive: never strand the tour
+    scrollIntoContainerView(el);
+  }
+  positionTourVisuals(el, step);
+}
+
+// Scroll inner containers only — never window.scrollIntoView, which can
+// scroll the HOST page when the demo is embedded in an iframe.
+function scrollIntoContainerView(el) {
+  let p = el.parentElement;
+  while (p && p !== document.body) {
+    if (p.scrollHeight > p.clientHeight + 4) {
+      const pr = p.getBoundingClientRect();
+      const er = el.getBoundingClientRect();
+      const delta = er.height > pr.height - 40
+        ? er.top - pr.top - 20
+        : (er.top + er.height / 2) - (pr.top + pr.height / 2);
+      p.scrollTop += delta;
+    }
+    p = p.parentElement;
+  }
+}
+
+function positionTourVisuals(el, step) {
+  const spot = document.getElementById('tourSpot');
+  const tip = document.getElementById('tourTip');
+  if (el) {
+    spot.classList.remove('tour-center');
+    const r = el.getBoundingClientRect();
+    const pad = 6;
+    spot.style.top = (r.top - pad) + 'px';
+    spot.style.left = (r.left - pad) + 'px';
+    spot.style.width = (r.width + pad * 2) + 'px';
+    spot.style.height = (r.height + pad * 2) + 'px';
+    positionTip(tip, r, step.placement);
+  } else {
+    spot.classList.add('tour-center');
+    spot.style.top = '0px';
+    spot.style.left = '0px';
+    spot.style.width = '100vw';
+    spot.style.height = '100vh';
+    tip.style.transform = 'translate(-50%, -50%)';
+    tip.style.top = '50%';
+    tip.style.left = '50%';
+  }
+}
+
+function positionTip(tip, r, placement) {
+  tip.style.transform = 'none';
+  const vw = window.innerWidth, vh = window.innerHeight, m = 12, gap = 14;
+  const tw = tip.offsetWidth, th = tip.offsetHeight;
+  const fits = {
+    bottom: r.bottom + gap + th < vh - m,
+    top: r.top - gap - th > m,
+    right: r.right + gap + tw < vw - m,
+    left: r.left - gap - tw > m,
+  };
+  let p = placement;
+  if (!fits[p]) p = ['bottom', 'top', 'right', 'left'].find(k => fits[k]) || 'bottom';
+  let top, left;
+  if (p === 'bottom') { top = r.bottom + gap; left = r.left + r.width / 2 - tw / 2; }
+  if (p === 'top')    { top = r.top - gap - th; left = r.left + r.width / 2 - tw / 2; }
+  if (p === 'right')  { top = r.top + r.height / 2 - th / 2; left = r.right + gap; }
+  if (p === 'left')   { top = r.top + r.height / 2 - th / 2; left = r.left - gap - tw; }
+  // Clamp inside the viewport (the iframe, when embedded)
+  left = Math.max(m, Math.min(left, vw - tw - m));
+  top = Math.max(m, Math.min(top, vh - th - m));
+  tip.style.top = top + 'px';
+  tip.style.left = left + 'px';
+}
+
+function repositionTour() {
+  if (!TOUR.active) return;
+  const step = TOUR.steps[TOUR.idx];
+  if (!step) return;
+  const el = step.selector ? document.getElementById(step.screen).querySelector(step.selector) : null;
+  positionTourVisuals(el, step);
+}
+
 // Bootstrap — script sits at the end of <body>, so the DOM is ready
 buildVerticalControls();
-applyVertical('hunger');
+ensureTourDom();
+(function bootFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const pv = (params.get('vertical') || '').toLowerCase();
+  const valid = Object.prototype.hasOwnProperty.call(VERTICALS, pv);
+  applyVertical(valid ? pv : 'hunger');
+  // ?vertical=… or ?embed=1 boots straight into the app, skipping the landing picker
+  if (valid || params.get('embed') === '1') navigateTo('dashboard');
+  // ?tour=auto starts the guided tour once the dashboard has settled
+  if (params.get('tour') === 'auto') setTimeout(() => { if (!TOUR.active) startTour(); }, 900);
+})();
 </script>
 </body>
 </html>
