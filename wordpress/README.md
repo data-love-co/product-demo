@@ -8,7 +8,7 @@ It is iframe-friendly (responsive down to phone widths, no localStorage, the gui
 
 | Parameter | Values | Effect |
 | --- | --- | --- |
-| `vertical` | `hunger` \| `housing` \| `economic` \| `care` \| `veterans` | Boot directly into that SDoH vertical, skipping the landing picker |
+| `vertical` | `hunger` \| `housing` \| `economic` \| `care` \| `veterans` | Boot directly into that focus area, skipping the landing picker (the param name stays `vertical` for back-compat) |
 | `tour` | `auto` | Auto-start the 7-step guided tour after load |
 | `embed` | `1` | Skip the login screen and boot straight into the app (use this for all embeds) |
 
@@ -80,5 +80,5 @@ The shortcode outputs the same responsive wrapper + iframe + fallback link as Op
 ## Notes
 
 - The demo is fully static and makes no external calls (fonts aside), so there's nothing to configure server-side.
-- The guided tour ends with a "Book a walkthrough" CTA linking to <https://calendly.com/dataloveco/nonprofit-data-insights-interview>; it opens in a new tab, outside the iframe.
+- The guided tour ends with a "Book a walkthrough" CTA linking to <https://dataloveco.com/contact>; it opens in a new tab, outside the iframe.
 - All demo organizations, people, and numbers are fictional ("Illustrative demo — sample data").

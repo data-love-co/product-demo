@@ -39,13 +39,13 @@ Then open <http://localhost:8000/index.html>.
 
 ## The demo scenarios — five SDoH verticals
 
-All scenario content lives in a single `VERTICALS` config object in `index.html`; every screen renders from the active vertical. Each vertical has a buyer (ED/CEO), a primary user (Program/Services Director), and a technical champion (Data/Outcomes Manager):
+All scenario content lives in a single `VERTICALS` config object in `index.html`; every screen renders from the active vertical. Each vertical has a buyer (Executive Director), a primary user (Program/Services Director), and a technical champion (Data/Outcomes Manager):
 
 | Vertical | Organization | Accent | Personas |
 | --- | --- | --- | --- |
 | **Hunger** | Harvest Bridge Network — Denver, CO (~$8.5M) | Coral | Maya Chen (ED) · David Okafor (Program Dir.) · Priya Nair (Data Mgr.) |
 | **Housing** | Cornerstone Home Partners — Longmont, CO (~$9M) | Teal | Ruth Delgado (ED) · Marcus Bell (Family Services Dir.) · Lena Park (Impact & Data Mgr.) |
-| **Economic Stability** | Ascend Financial Futures — Aurora, CO (~$6M) | Gold | Daniel Osei (CEO) · Sofia Reyes (Workforce Program Dir.) · Amir Haddad (Data & Outcomes Lead) |
+| **Economic Stability** | Ascend Financial Futures — Aurora, CO (~$6M) | Gold | Daniel Osei (Executive Director) · Sofia Reyes (Workforce Program Dir.) · Amir Haddad (Data & Outcomes Lead) |
 | **Access to Care** | Wellspring Community Health Collaborative — Pueblo, CO (~$7M) | Purple | Dr. Naomi Wright (ED) · Carlos Mendez (Care Coordination Dir.) · Aisha Bello (Health Data Analyst) |
 | **Veteran Services** | Sentinel Veteran Collective — Colorado Springs, CO (~$5.5M) | Ink | James Whitfield (ED) · Tanya Brooks (Veteran Services Dir.) · Ryan Cho (Data & Eligibility Analyst) |
 
@@ -57,7 +57,7 @@ The demo is a single-page app with eight "screens" the user can navigate between
 
 | Screen | What it shows |
 | --- | --- |
-| **Login** | Branded login card with the **SDoH vertical picker** (5 cards — selecting one re-skins the entire demo), Data Love Co color palette, and DM Sans/Space Grotesk typography. |
+| **Landing** | Branded demo-select card with the **focus-area picker** (5 cards showing org + persona context — selecting one re-skins the entire demo). No email field or login chrome — it reads as a demo, not a sign-in. |
 | **Dashboard** | Welcome panel + KPIs (4–6 stat cards per vertical), the product suite (Dorothy, DataHub, DataFlow, Insights Dash, StoryCraft, PolicyPulse), and two charts: monthly volume across all programs + a "Service Mix by Program" donut. |
 | **Dorothy** | The AI chat experience. **Auto-plays on entry:** the active vertical's prompt types itself into a wrapping textarea, the bot streams its response, and a 7-stage pipeline panel animates. *Centerpiece of the demo.* |
 | **HITL Review** | "Human-in-the-Loop" review screen. Surfaces the data intents Dorothy generated (5 per vertical, with grain/filter details) so the user can approve them (or attach context) before SQL runs. |
@@ -66,7 +66,7 @@ The demo is a single-page app with eight "screens" the user can navigate between
 | **Insights Dash** | A self-serve analytics dashboard with **program filters** (per vertical) and four insight cards: weekly volume, monthly trend, a distribution chart, and a survey response tracker. |
 | **StoryCraft** | Auto-narrative report builder — drafts a quarterly program write-up addressed to a fictional stakeholder (e.g., Regional Food Policy Office for Hunger). |
 
-Every screen has a compact **"SDoH Vertical" switcher** in the sidebar — changing it re-renders all screens and charts live, no reload.
+Every screen has a compact **"Focus Area" switcher** in the sidebar — changing it re-renders all screens and charts live, no reload. (Internally the code still calls these `VERTICALS`; only the user-facing label changed.)
 
 ---
 
