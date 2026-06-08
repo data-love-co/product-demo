@@ -28,7 +28,7 @@ No plugin required.
 
 ```html
 <!-- Data Love AI — demo embed (focus-area picker) -->
-<div style="position:relative;width:100%;aspect-ratio:16/9;min-height:700px;border-radius:12px;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,0.12);">
+<div style="position:relative;width:100%;height:100dvh;min-height:560px;border-radius:12px;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,0.12);">
   <iframe
     src="https://data-love-co.github.io/product-demo/"
     title="Data Love AI — guided product demo"
@@ -41,7 +41,11 @@ No plugin required.
 </p>
 ```
 
-The wrapper keeps a ~16:9 aspect ratio with a 700px minimum height (enough for the picker card without internal scrolling), so the demo stays usable on narrow columns and phones. The "Open the full demo" link is the fallback for readers whose browsers or email clients strip iframes. To boot straight into one scenario instead, append `?vertical=housing&tour=auto&embed=1` to both URLs.
+The wrapper is sized to the **viewport height** (`100dvh`) so the demo fills the screen like a real app — the WordPress page itself doesn't scroll, and scrolling happens only inside the demo's panels where it's meant to. (`dvh` is the *dynamic* viewport height, which behaves correctly on phones as the browser's address bar shows/hides.) The "Open the full demo" link is the fallback for readers whose browsers or email clients strip iframes.
+
+**Removing the last sliver of page scroll.** Because your theme's header sits above the embed, a full `100dvh` embed can leave a small amount of page scroll equal to the header's height. To fit the remaining screen exactly, subtract that height: change `height:100dvh` to `height:calc(100dvh - 90px)`, using your header's actual height in place of `90px`. (Quick way to find it: right-click your site header → **Inspect**, and read its height in the browser dev tools.)
+
+To boot straight into one scenario instead, append `?vertical=housing&tour=auto&embed=1` to both URLs.
 
 ## Option 2 — WordPress.com
 
@@ -62,19 +66,29 @@ The wrapper keeps a ~16:9 aspect ratio with a 700px minimum height (enough for t
 **Use in any page/post:**
 
 ```text
-[datalove_demo]                                ← focus-area picker (default)
+[datalove_demo offset="90"]                    ← fit below a 90px site header (recommended)
 [datalove_demo vertical="housing" tour="auto"] ← boot into Housing + auto-tour
-[datalove_demo vertical="veterans"]
-[datalove_demo vertical="care" min_height="720"]
+[datalove_demo expand="off"]                   ← inline only, hide the Expand button
+[datalove_demo contact_url="https://dataloveco.com/book"]
 ```
 
 | Shortcode attribute | Values | Default |
 | --- | --- | --- |
 | `vertical` | `hunger` / `housing` / `economic` / `care` / `veterans` — omit to show the picker | picker |
 | `tour` | `auto` (only applies when `vertical` is set) | off |
-| `min_height` | px, minimum 320 | `700` (picker) / `640` (direct) |
+| `height` | any CSS length (`100dvh`, `90vh`, `800px`) — fills the viewport so the page doesn't scroll | `100dvh` |
+| `offset` | px subtracted from `height` for your theme's header, for an exact fit below it | `0` |
+| `min_height` | px, minimum 320 — a low floor so short windows shrink instead of scrolling | `420` |
+| `expand` | `on` / `off` — show the **⛶ Expand** full-window button | `on` |
+| `contact_url` | URL for the **Contact us** button shown in the expanded overlay | `https://dataloveco.com/contact` |
 
-The shortcode outputs the same responsive wrapper + iframe + fallback link as Option 1 (`embed=1` is added automatically in direct mode).
+### How the hybrid layout works
+
+- **Inline (default):** the demo fits the screen *below your site header*, so your nav/menu stays visible the whole time — visitors can reach Contact or browse the rest of the site at any point. Set `offset` to your header's height (plus any theme padding) to remove the last bit of page scroll: e.g. `[datalove_demo offset="90"]`. Find your header height via right-click → **Inspect**.
+- **Expanded (⛶ Expand button):** clicking it lifts the demo to a **full-window overlay** with no page scroll at all. The overlay carries a slim bar with **✕ Exit demo** (collapses back to the page; the **Esc** key also works) and a **Contact us** button. This uses a CSS overlay rather than the native Fullscreen API, so it works reliably on phones too.
+- Scrolling *inside* the demo's own panels (e.g. the chat history) is expected — that's the app behaving like an app.
+
+`embed=1` is added automatically in direct mode. The CSS/JS the buttons need is printed once per page, even with multiple shortcodes.
 
 ---
 
